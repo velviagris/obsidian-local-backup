@@ -19,7 +19,9 @@ export class NewVersionNotifyModal extends Modal {
         const contentDiv = contentEl.createDiv("local-backup-update-modal");
         const releaseNotes = [
             "1. Remove `One Way Backup Settings`",
-            "2. Add option to exclude folders using wildcards. (Contributed by @Miguel Primentel)"
+            "2. Add option to exclude folders using wildcards. (Contributed by @Miguel Primentel)",
+            "3. Add `Backup once on quit`",
+            "4. Add `Apply & Reload` Button on Setting Page."
         ]
             .join("\n");
 

@@ -2,7 +2,16 @@
 // Note: TypeScript checks are disabled for this file due to module resolution issues.
 // To resolve these issues, ensure that the 'obsidian' module is properly set up in the project's TypeScript configuration.
 
-import { App, PluginSettingTab, Setting, Notice, DropdownComponent, ToggleComponent, TextComponent, ButtonComponent } from "obsidian";
+import {
+	App,
+	PluginSettingTab,
+	Setting,
+	Notice,
+	DropdownComponent,
+	ToggleComponent,
+	TextComponent,
+	ButtonComponent,
+} from "obsidian";
 import LocalBackupPlugin from "./main";
 import "./styles.css";
 
@@ -45,9 +54,15 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 		containerEl.createEl("h3", { text: "General Settings" });
 
 		const ribbonIconDesc = document.createDocumentFragment();
-		ribbonIconDesc.appendChild(document.createTextNode("Show a ribbon icon in the left sidebar."));
+		ribbonIconDesc.appendChild(
+			document.createTextNode("Show a ribbon icon in the left sidebar.")
+		);
 		ribbonIconDesc.appendChild(document.createElement("br"));
-		ribbonIconDesc.appendChild(document.createTextNode("Please close and reopen Obsidian for this setting to take effect."));
+		ribbonIconDesc.appendChild(
+			document.createTextNode(
+				"Please close and reopen Obsidian for this setting to take effect."
+			)
+		);
 
 		new Setting(containerEl)
 			.setName("Backup once on startup")
@@ -57,6 +72,20 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.startupBackupStatus)
 					.onChange(async (value: boolean) => {
 						this.plugin.settings.startupBackupStatus = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Backup once on quit")
+			.setDesc(
+				"Run local backup once on Obsidian quits. Works on `External file archiver backup` toggled."
+			)
+			.addToggle((toggle: ToggleComponent) =>
+				toggle
+					.setValue(this.plugin.settings.onquitBackupStatus)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.onquitBackupStatus = value;
 						await this.plugin.saveSettings();
 					})
 			);
@@ -107,7 +136,9 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Windows output path (optional)")
-			.setDesc("Setup a Windows backup storage path. eg. D:\\documents\\Obsidian")
+			.setDesc(
+				"Setup a Windows backup storage path. eg. D:\\documents\\Obsidian"
+			)
 			.addText((text: TextComponent) =>
 				text
 					.setValue(this.plugin.settings.winSavePathValue)
@@ -119,7 +150,9 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Linux/MacOS output path (optional)")
-			.setDesc("Setup a Unix backup storage path. eg. /home/user/Documents/Obsidian")
+			.setDesc(
+				"Setup a Unix backup storage path. eg. /home/user/Documents/Obsidian"
+			)
 			.addText((text: TextComponent) =>
 				text
 					.setValue(this.plugin.settings.unixSavePathValue)
@@ -130,9 +163,15 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 			);
 
 		const fileNameFragment = document.createDocumentFragment();
-		fileNameFragment.appendChild(document.createTextNode("Name of the backup ZIP file."));
+		fileNameFragment.appendChild(
+			document.createTextNode("Name of the backup ZIP file.")
+		);
 		fileNameFragment.appendChild(document.createElement("br"));
-		fileNameFragment.appendChild(document.createTextNode("You may use date placeholders to add date and time."));
+		fileNameFragment.appendChild(
+			document.createTextNode(
+				"You may use date placeholders to add date and time."
+			)
+		);
 		fileNameFragment.appendChild(document.createElement("br"));
 		fileNameFragment.appendChild(document.createTextNode("%Y for year"));
 		fileNameFragment.appendChild(document.createElement("br"));
@@ -146,7 +185,11 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 		fileNameFragment.appendChild(document.createElement("br"));
 		fileNameFragment.appendChild(document.createTextNode("%S for second"));
 		fileNameFragment.appendChild(document.createElement("br"));
-		fileNameFragment.appendChild(document.createTextNode("Default: {vaultName}-Backup-%Y_%m_%d-%H_%M_%S"));
+		fileNameFragment.appendChild(
+			document.createTextNode(
+				"Default: {vaultName}-Backup-%Y_%m_%d-%H_%M_%S"
+			)
+		);
 
 		new Setting(containerEl)
 			.setName("File name")
@@ -201,8 +244,7 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 								"Backup intervals must be a positive number."
 							);
 							return;
-						}
-						else {
+						} else {
 							this.plugin.settings.backupFrequencyValue = value;
 							await this.plugin.saveSettings();
 							await this.plugin.applySettings();
@@ -224,8 +266,7 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 								"Retry times must be a positive number."
 							);
 							return;
-						}
-						else {
+						} else {
 							this.plugin.settings.maxRetriesValue = value;
 							await this.plugin.saveSettings();
 							await this.plugin.applySettings();
@@ -247,8 +288,7 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 								"Backup intervals must be a positive number."
 							);
 							return;
-						}
-						else {
+						} else {
 							this.plugin.settings.retryIntervalValue = value;
 							await this.plugin.saveSettings();
 							await this.plugin.applySettings();
@@ -282,7 +322,9 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Show notifications")
-			.setDesc("Enable/Disable normal notifications, keep exceptions only")
+			.setDesc(
+				"Enable/Disable normal notifications, keep exceptions only"
+			)
 			.addToggle((toggle: ToggleComponent) =>
 				toggle
 					.setValue(this.plugin.settings.showNotifications)
@@ -292,11 +334,27 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl("h3", { text: "File Archiver Settings (Optional)" });
+		new Setting(containerEl).addButton((btn: ButtonComponent) =>
+			btn
+				.setTooltip("Reload Local-Backup to apply changes.")
+				.setButtonText("Apply & Reload")
+				.onClick(async () => {
+					new Notice("Local-Backup Reloading.");
+					await this.plugin.unload();
+					await this.plugin.load();
+					new Notice("Local-Backup Reloaded.");
+				})
+		);
+
+		containerEl.createEl("h3", {
+			text: "File Archiver Settings (Optional)",
+		});
 
 		new Setting(containerEl)
-			.setName("Backup by Calling external file archiver")
-			.setDesc("If toggled, backups will be created by calling external file archiver. Using 7-Zip is recommended.")
+			.setName("External file archiver backup")
+			.setDesc(
+				"If toggled, backups will be created by calling external file archiver. Using 7-Zip is recommended."
+			)
 			.addToggle((toggle: ToggleComponent) =>
 				toggle
 					.setValue(this.plugin.settings.callingArchiverStatus)
@@ -308,7 +366,9 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Select file archiver")
-			.setDesc("The selected archiver must be installed. eg. 7-Zip for Windows, 7-Zip/p7zip for Unix")
+			.setDesc(
+				"The selected archiver must be installed. eg. 7-Zip for Windows, 7-Zip/p7zip for Unix"
+			)
 			.addDropdown((dropDown: DropdownComponent) => {
 				dropDown
 					.addOption("sevenZip", "7-Zip")
@@ -337,7 +397,9 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("File archiver path (Win)")
-			.setDesc("Full path of Archiver. eg. D:\\software\\7-Zip\\7z.exe. And bz.exe for Bandizip, WinRAR.exe for WinRAR.")
+			.setDesc(
+				"Full path of Archiver. eg. D:\\software\\7-Zip\\7z.exe. And bz.exe for Bandizip, WinRAR.exe for WinRAR."
+			)
 			.addText((text: TextComponent) =>
 				text
 					.setValue(this.plugin.settings.archiverWinPathValue)
@@ -359,15 +421,15 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 					})
 			);
 
-		new Setting(containerEl)
-			.addButton((btn: ButtonComponent) => btn
+		new Setting(containerEl).addButton((btn: ButtonComponent) =>
+			btn
 				.setTooltip("Restore defaults")
 				.setButtonText("Restore defaults")
 				.onClick(async () => {
 					await this.plugin.restoreDefault();
 					new Notice("Settings restored to default.");
 				})
-			);
+		);
 	}
 }
 

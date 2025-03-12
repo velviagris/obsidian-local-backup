@@ -1,4 +1,4 @@
-import { App, Plugin, addIcon, Notice } from "obsidian";
+import { App, Plugin, addIcon, Notice, Workspace } from "obsidian";
 import { join } from "path";
 import { LocalBackupSettingTab } from "./settings";
 import {
@@ -13,6 +13,7 @@ import { NewVersionNotifyModal, PromptModal } from "./modals";
 interface LocalBackupPluginSettings {
 	versionValue: string;
 	startupBackupStatus: boolean;
+	onquitBackupStatus: boolean;
 	lifecycleValue: string;
 	backupsPerDayValue: string;
 	maxRetriesValue: string;
@@ -36,6 +37,7 @@ interface LocalBackupPluginSettings {
 const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	versionValue: "",
 	startupBackupStatus: false,
+	onquitBackupStatus: false,
 	lifecycleValue: "3",
 	backupsPerDayValue: "3",
 	maxRetriesValue: "1",
@@ -118,6 +120,10 @@ export default class LocalBackupPlugin extends Plugin {
 		}
 
 		await this.applySettings();
+
+		if (this.settings.onquitBackupStatus){
+			this.app.workspace.on('quit', () => this.archiveVaultWithRetryAsync())
+		}
 	}
 
 	async loadSettings() {

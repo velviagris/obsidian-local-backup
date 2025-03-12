@@ -21,11 +21,6 @@ interface LocalBackupPluginSettings {
 	showRibbonIcon: boolean;
 	showConsoleLog: boolean;
 	showNotifications: boolean;
-	oneWayBackupStatus: boolean;
-	oneWayWinSavePathValue: string; // Added for one-way backup Windows path
-	oneWayUnixSavePathValue: string; // Added for one-way backup Unix path
-	oneWayLifecycleValue: string; // Added for one-way backup retention
-	oneWayBackupsPerDayValue: string; // Added for one-way backups per day
 	callingArchiverStatus: boolean;
 	archiverTypeValue: string;
 	archiveFileTypeValue: string;
@@ -297,91 +292,11 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl("h3", { text: "One Way Backup Settings" });
-
-		new Setting(containerEl)
-			.setName("Enable one way backups")
-			.setDesc("Enable one-way backups to another folder")
-			.addToggle((toggle: ToggleComponent) =>
-				toggle
-					.setValue(this.plugin.settings.oneWayBackupStatus)
-					.onChange(async (value: boolean) => {
-						this.plugin.settings.oneWayBackupStatus = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("One way Windows output path")
-			.setDesc("Setup a Windows one-way backup storage path. eg. D:\\documents\\OneWayBackup")
-			.addText((text: TextComponent) =>
-				text
-					.setValue(this.plugin.settings.oneWayWinSavePathValue)
-					.onChange(async (value: string) => {
-						this.plugin.settings.oneWayWinSavePathValue = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("One way Linux/MacOS output path")
-			.setDesc("Setup a Unix one-way backup storage path. eg. /home/user/Documents/OneWayBackup")
-			.addText((text: TextComponent) =>
-				text
-					.setValue(this.plugin.settings.oneWayUnixSavePathValue)
-					.onChange(async (value: string) => {
-						this.plugin.settings.oneWayUnixSavePathValue = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("One way backup history length (days)")
-			.setDesc(
-				"Specify the number of days one-way backups should be retained. (0 -- Infinity)"
-			)
-			.addText((text: TextComponent) =>
-				text
-					.setValue(this.plugin.settings.oneWayLifecycleValue)
-					.onChange(async (value: string) => {
-						const numericValue = parseFloat(value);
-						if (isNaN(numericValue) || numericValue < 0) {
-							new Notice(
-								"One way backup lifecycle must be a non-negative number."
-							);
-							return;
-						}
-						this.plugin.settings.oneWayLifecycleValue = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("One way backups per day")
-			.setDesc(
-				"Specify the number of one-way backups per day to keep. (0 -- Infinity)"
-			)
-			.addText((text: TextComponent) =>
-				text
-					.setValue(this.plugin.settings.oneWayBackupsPerDayValue)
-					.onChange(async (value: string) => {
-						const numericValue = parseFloat(value);
-						if (isNaN(numericValue) || numericValue < 0) {
-							new Notice(
-								"One way backups per day must be a non-negative number."
-							);
-							return;
-						}
-						this.plugin.settings.oneWayBackupsPerDayValue = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
 		containerEl.createEl("h3", { text: "File Archiver Settings (Optional)" });
 
 		new Setting(containerEl)
 			.setName("Backup by Calling external file archiver")
-			.setDesc("If toggled, backups will be created by calling external file archiver.")
+			.setDesc("If toggled, backups will be created by calling external file archiver. Using 7-Zip is recommended.")
 			.addToggle((toggle: ToggleComponent) =>
 				toggle
 					.setValue(this.plugin.settings.callingArchiverStatus)
@@ -398,7 +313,7 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 				dropDown
 					.addOption("sevenZip", "7-Zip")
 					.addOption("winRAR", "WinRAR")
-					.addOption("bandizip", "bandizip")
+					.addOption("bandizip", "Bandizip")
 					.setValue(this.plugin.settings.archiverTypeValue)
 					.onChange(async (value: string) => {
 						this.plugin.settings.archiverTypeValue = value;
@@ -422,7 +337,7 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("File archiver path (Win)")
-			.setDesc("Full path of Archiver. eg. D:\\software\\7-Zip\\7z.exe for Windows. Using bz.exe (Bandizip) for Windows is recommended.")
+			.setDesc("Full path of Archiver. eg. D:\\software\\7-Zip\\7z.exe. And bz.exe for Bandizip, WinRAR.exe for WinRAR.")
 			.addText((text: TextComponent) =>
 				text
 					.setValue(this.plugin.settings.archiverWinPathValue)

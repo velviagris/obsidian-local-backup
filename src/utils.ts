@@ -258,7 +258,7 @@ export class LocalBackupUtils {
 			switch (archiverType) {
 				case "sevenZip":
 					// 7-Zip uses -x!pattern for exclusions
-					exclusionParams = excludedPatterns.map(pattern => `-x!${pattern}`).join(' ');
+					exclusionParams = excludedPatterns.map(pattern => `-xr!${pattern}`).join(' ');
 					break;
 				case "winRAR":
 					// WinRAR uses -x pattern for exclusions
@@ -295,7 +295,7 @@ export class LocalBackupUtils {
 
 			case "winRAR":
 				const winRARPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" a -ep1 -rh "${backupFilePath}" "${vaultPath}\*" ${exclusionParams}`;
+					const command = `"${archiverPath}" a -ep1 -rh "${backupFilePath}" "${vaultPath}\\*" ${exclusionParams} -as`;
 					if (this.plugin.settings.showConsoleLog) {
 						console.log(`command: ${command}`);
 					}

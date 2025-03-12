@@ -30,11 +30,6 @@ interface LocalBackupPluginSettings {
 	showRibbonIcon: boolean;
 	showConsoleLog: boolean;
 	showNotifications: boolean;
-	oneWayBackupStatus: boolean;
-	oneWayWinSavePathValue: string;
-	oneWayUnixSavePathValue: string;
-	oneWayLifecycleValue: string;
-	oneWayBackupsPerDayValue: string;
 	excludedDirectoriesValue: string;
 }
 
@@ -58,11 +53,6 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	showRibbonIcon: true,
 	showConsoleLog: false,
 	showNotifications: true,
-	oneWayBackupStatus: false,
-	oneWayWinSavePathValue: "",
-	oneWayUnixSavePathValue: "",
-	oneWayLifecycleValue: "3",
-	oneWayBackupsPerDayValue: "3",
 	excludedDirectoriesValue: "",
 };
 
@@ -152,9 +142,6 @@ export default class LocalBackupPlugin extends Plugin {
 		while (retryCount < maxRetries) {
 			try {
 				await this.archiveVaultAsync(specificFileName);
-				if (this.settings.oneWayBackupStatus) {
-					await this.archiveVaultAsync(specificFileName, true);
-				}
 				break;
 			} catch (error) {
 				console.error(`Error during archive attempt ${retryCount + 1}: ${error}`);
@@ -173,7 +160,7 @@ export default class LocalBackupPlugin extends Plugin {
 		}
 	}
 
-	async archiveVaultAsync(specificFileName: string, isOneWay: boolean = false) {
+	async archiveVaultAsync(specificFileName: string) {
 		try {
 			await this.loadSettings();
 
@@ -187,14 +174,14 @@ export default class LocalBackupPlugin extends Plugin {
 			let lifecycleValue = "";
 			let backupsPerDayValue = "";
 			if (platform === "win32") {
-				savePathValue = isOneWay ? this.settings.oneWayWinSavePathValue : this.settings.winSavePathValue;
+				savePathValue =  this.settings.winSavePathValue;
 				archiverPathValue = this.settings.archiverWinPathValue;
 			} else if (platform === "linux" || platform === "darwin") {
-				savePathValue = isOneWay ? this.settings.oneWayUnixSavePathValue : this.settings.unixSavePathValue;
+				savePathValue = this.settings.unixSavePathValue;
 				archiverPathValue = this.settings.archiverUnixPathValue;
 			}
-			lifecycleValue = isOneWay ? this.settings.oneWayLifecycleValue : this.settings.lifecycleValue;
-			backupsPerDayValue = isOneWay ? this.settings.oneWayBackupsPerDayValue : this.settings.backupsPerDayValue;
+			lifecycleValue = this.settings.lifecycleValue;
+			backupsPerDayValue = this.settings.backupsPerDayValue;
 			let backupFilePath = join(savePathValue, backupZipName);
 
 			if (this.settings.callingArchiverStatus) {

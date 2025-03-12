@@ -10,6 +10,7 @@ Automatically creates a local backup of the vault.
 ## Features
 
 - Backup on startup
+- Backup on quit
 - Setup backups' lifecycle
 - Customize output path
 - Interval backups
@@ -24,7 +25,8 @@ Automatically creates a local backup of the vault.
 
 #### General Settings
 
-![general-settings](screenshot/general-settings.png)
+![general-settings-1](screenshot/general-settings-1.png)
+![general-settings-2](screenshot/general-settings-2.png)
 
 ##### Hints
 

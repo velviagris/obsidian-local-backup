@@ -11,16 +11,15 @@ export class NewVersionNotifyModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        const release = "0.1.8";
+        const release = "0.1.9";
 
         const header = `### New in Local Backup ${release}\n`
         const text = `Thank you for using Local Backup!\n`;
 
         const contentDiv = contentEl.createDiv("local-backup-update-modal");
         const releaseNotes = [
-            "1. Update default backup function to asynchronous.",
-            "2. Add `Show console logs` and `Show notifications` button in settings page.",
-            "3. Contributed by @Lyqed. Add `One Way Backup Settings` in settings page. Now you can output backups to one more path."
+            "1. Remove `One Way Backup Settings`",
+            "2. Add option to exclude folders using wildcards. (Contributed by @Miguel Primentel)"
         ]
             .join("\n");
 

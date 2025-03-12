@@ -1,7 +1,7 @@
 {
 	"id": "local-backup",
 	"name": "Local Backup",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"minAppVersion": "0.15.0",
 	"description": "Automatically creates a local backup of the vault.",
 	"author": "GC Chen",

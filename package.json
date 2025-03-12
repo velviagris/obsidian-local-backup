@@ -22,7 +22,7 @@
 		"@typescript-eslint/parser": "^5.62.0",
 		"adm-zip": "^0.5.10",
 		"builtin-modules": "^3.3.0",
-		"esbuild": "^0.17.19",
+		"esbuild": "^0.25.1",
 		"fs-extra": "^11.1.1",
 		"obsidian": "^1.4.11",
 		"tslib": "^2.6.2",

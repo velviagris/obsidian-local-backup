@@ -78,7 +78,10 @@ export default class LocalBackupPlugin extends Plugin {
 				await this.saveSettings();
 			}
 		} catch (error) {
-			new Notice(`Please reconfigure \`Local Backup\` after upgrading to ${this.manifest.version}!`, 10000);
+			new Notice(
+				`Please reconfigure \`Local Backup\` after upgrading to ${this.manifest.version}!`,
+				10000
+			);
 		}
 
 		// Run local backup command
@@ -121,13 +124,19 @@ export default class LocalBackupPlugin extends Plugin {
 
 		await this.applySettings();
 
-		if (this.settings.onquitBackupStatus){
-			this.app.workspace.on('quit', () => this.archiveVaultWithRetryAsync())
+		if (this.settings.onquitBackupStatus) {
+			this.app.workspace.on("quit", () =>
+				this.archiveVaultWithRetryAsync()
+			);
 		}
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 
 	async loadUtis() {
@@ -150,17 +159,25 @@ export default class LocalBackupPlugin extends Plugin {
 				await this.archiveVaultAsync(specificFileName);
 				break;
 			} catch (error) {
-				console.error(`Error during archive attempt ${retryCount + 1}: ${error}`);
+				console.error(
+					`Error during archive attempt ${retryCount + 1}: ${error}`
+				);
 				retryCount++;
 
 				if (retryCount < maxRetries) {
 					await this.delay(retryInterval);
 					if (this.settings.showConsoleLog) {
-						console.log(`Retrying archive attempt ${retryCount + 1}...`);
+						console.log(
+							`Retrying archive attempt ${retryCount + 1}...`
+						);
 					}
 				} else {
-					console.error(`Failed to create vault backup after ${maxRetries} attempts.`);
-					new Notice(`Failed to create vault backup after ${maxRetries} attempts: ${error}`);
+					console.error(
+						`Failed to create vault backup after ${maxRetries} attempts.`
+					);
+					new Notice(
+						`Failed to create vault backup after ${maxRetries} attempts: ${error}`
+					);
 				}
 			}
 		}
@@ -170,8 +187,10 @@ export default class LocalBackupPlugin extends Plugin {
 		try {
 			await this.loadSettings();
 
-			let fileName = specificFileName || this.settings.fileNameFormatValue;
-			const fileNameWithDateValues = replaceDatePlaceholdersWithValues(fileName);
+			let fileName =
+				specificFileName || this.settings.fileNameFormatValue;
+			const fileNameWithDateValues =
+				replaceDatePlaceholdersWithValues(fileName);
 			const backupZipName = `${fileNameWithDateValues}.zip`;
 			const vaultPath = (this.app.vault.adapter as any).basePath;
 			const platform = process.platform;
@@ -180,7 +199,7 @@ export default class LocalBackupPlugin extends Plugin {
 			let lifecycleValue = "";
 			let backupsPerDayValue = "";
 			if (platform === "win32") {
-				savePathValue =  this.settings.winSavePathValue;
+				savePathValue = this.settings.winSavePathValue;
 				archiverPathValue = this.settings.archiverWinPathValue;
 			} else if (platform === "linux" || platform === "darwin") {
 				savePathValue = this.settings.unixSavePathValue;
@@ -191,8 +210,17 @@ export default class LocalBackupPlugin extends Plugin {
 			let backupFilePath = join(savePathValue, backupZipName);
 
 			if (this.settings.callingArchiverStatus) {
-				backupFilePath = join(savePathValue, `${fileNameWithDateValues}.${this.settings.archiveFileTypeValue}`);
-				await this.utils.createFileByArchiver(this.settings.archiverTypeValue, archiverPathValue, this.settings.archiveFileTypeValue, vaultPath, backupFilePath);
+				backupFilePath = join(
+					savePathValue,
+					`${fileNameWithDateValues}.${this.settings.archiveFileTypeValue}`
+				);
+				await this.utils.createFileByArchiver(
+					this.settings.archiverTypeValue,
+					archiverPathValue,
+					this.settings.archiveFileTypeValue,
+					vaultPath,
+					backupFilePath
+				);
 			} else {
 				await this.utils.createZipByAdmZip(vaultPath, backupFilePath);
 			}
@@ -208,21 +236,22 @@ export default class LocalBackupPlugin extends Plugin {
 				savePathValue,
 				savePathValue,
 				this.settings.fileNameFormatValue,
-				lifecycleValue);
+				lifecycleValue
+			);
 
 			this.utils.deletePerDayBackups(
 				savePathValue,
 				savePathValue,
 				this.settings.fileNameFormatValue,
-				backupsPerDayValue);
-
+				backupsPerDayValue
+			);
 		} catch (error) {
 			throw error;
 		}
 	}
 
 	async delay(ms: number) {
-		return new Promise(resolve => setTimeout(resolve, ms));
+		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 
 	async startAutoBackupInterval(intervalMinutes: number) {
@@ -256,7 +285,9 @@ export default class LocalBackupPlugin extends Plugin {
 			this.settings.intervalBackupStatus &&
 			!isNaN(parseInt(this.settings.backupFrequencyValue))
 		) {
-			const intervalMinutes = parseInt(this.settings.backupFrequencyValue);
+			const intervalMinutes = parseInt(
+				this.settings.backupFrequencyValue
+			);
 			await this.startAutoBackupInterval(intervalMinutes);
 		} else if (!this.settings.intervalBackupStatus) {
 			this.stopAutoBackupInterval();

@@ -16,15 +16,15 @@ export class LocalBackupUtils {
 	 * Delete backups by lifecycleSetting
 	 * @param winSavePath
 	 * @param unixSavePath
-	 * @param fileNameFormat 
-	 * @param lifecycle 
-	 * @returns 
+	 * @param fileNameFormat
+	 * @param lifecycle
+	 * @returns
 	 */
 	deleteBackupsByLifeCycle(
 		winSavePath: string,
 		unixSavePath: string,
 		fileNameFormat: string,
-		lifecycle: string,
+		lifecycle: string
 	) {
 		if (this.plugin.settings.showConsoleLog) {
 			console.log("Run deleteBackupsByLifeCycle");
@@ -58,17 +58,24 @@ export class LocalBackupUtils {
 				files.forEach((file) => {
 					const filePath = path.join(savePathSetting, file);
 					const stats = fs.statSync(filePath);
-					const fileNameRegex = this.generateRegexFromCustomPattern(fileNameFormat);
+					const fileNameRegex =
+						this.generateRegexFromCustomPattern(fileNameFormat);
 					const matchFileName = file.match(fileNameRegex);
 
 					if (stats.isFile() && matchFileName !== null) {
 						const parseTime = stats.mtime;
-						const createDate = new Date(parseTime.getFullYear(), parseTime.getMonth(), parseTime.getDate());
+						const createDate = new Date(
+							parseTime.getFullYear(),
+							parseTime.getMonth(),
+							parseTime.getDate()
+						);
 
 						if (createDate < currentDate) {
 							fs.remove(filePath);
 							if (this.plugin.settings.showConsoleLog) {
-								console.log(`Backup removed by deleteBackupsByLifeCycle: ${filePath}`);
+								console.log(
+									`Backup removed by deleteBackupsByLifeCycle: ${filePath}`
+								);
 							}
 						}
 					}
@@ -80,9 +87,9 @@ export class LocalBackupUtils {
 	/**
 	 * Delete backups by backupsPerDayValue
 	 * @param winSavePath
-	 * @param unixSavePath 
-	 * @param fileNameFormat 
-	 * @param backupsPerDay 
+	 * @param unixSavePath
+	 * @param fileNameFormat
+	 * @param backupsPerDay
 	 */
 	deletePerDayBackups(
 		winSavePath: string,
@@ -116,7 +123,8 @@ export class LocalBackupUtils {
 
 			const currentDate = new Date();
 			currentDate.setHours(0, 0, 0, 0);
-			const fileNameRegex = this.generateRegexFromCustomPattern(fileNameFormat);
+			const fileNameRegex =
+				this.generateRegexFromCustomPattern(fileNameFormat);
 
 			const backupFiles = files.filter((file) => {
 				const filePath = path.join(savePathSetting, file);
@@ -130,22 +138,34 @@ export class LocalBackupUtils {
 				const filePath = path.join(savePathSetting, file);
 				const stats = fs.statSync(filePath);
 				const parseTime = stats.mtime;
-				const createDate = new Date(parseTime.getFullYear(), parseTime.getMonth(), parseTime.getDate());
+				const createDate = new Date(
+					parseTime.getFullYear(),
+					parseTime.getMonth(),
+					parseTime.getDate()
+				);
 
 				return createDate.getTime() === currentDate.getTime();
 			});
 
 			if (todayBackupFiles.length > parseInt(backupsPerDay)) {
-				const filesToDelete = todayBackupFiles.slice(0, todayBackupFiles.length - parseInt(backupsPerDay));
+				const filesToDelete = todayBackupFiles.slice(
+					0,
+					todayBackupFiles.length - parseInt(backupsPerDay)
+				);
 
 				filesToDelete.forEach((file) => {
 					const filePath = path.join(savePathSetting, file);
 					fs.remove(filePath, (err) => {
 						if (err) {
-							console.error(`Failed to remove backup file: ${filePath}`, err);
+							console.error(
+								`Failed to remove backup file: ${filePath}`,
+								err
+							);
 						} else {
 							if (this.plugin.settings.showConsoleLog) {
-								console.log(`Backup removed by deletePerDayBackups: ${filePath}`);
+								console.log(
+									`Backup removed by deletePerDayBackups: ${filePath}`
+								);
 							}
 						}
 					});
@@ -156,18 +176,18 @@ export class LocalBackupUtils {
 
 	/**
 	 * Generate regex from custom pattern,
-	 * @param customPattern 
-	 * @returns 
+	 * @param customPattern
+	 * @returns
 	 */
 	generateRegexFromCustomPattern(customPattern: string): RegExp {
 		// Replace placeholders like %Y, %m, etc. with corresponding regex patterns
 		const regexPattern = customPattern
-			.replace(/%Y/g, '\\d{4}') // Year
-			.replace(/%m/g, '\\d{2}') // Month
-			.replace(/%d/g, '\\d{2}') // Day
-			.replace(/%H/g, '\\d{2}') // Hour
-			.replace(/%M/g, '\\d{2}') // Minute
-			.replace(/%S/g, '\\d{2}'); // Second
+			.replace(/%Y/g, "\\d{4}") // Year
+			.replace(/%m/g, "\\d{2}") // Month
+			.replace(/%d/g, "\\d{2}") // Day
+			.replace(/%H/g, "\\d{2}") // Hour
+			.replace(/%M/g, "\\d{2}") // Minute
+			.replace(/%S/g, "\\d{2}"); // Second
 
 		// Create a regular expression to match the custom pattern
 		return new RegExp(regexPattern);
@@ -175,8 +195,8 @@ export class LocalBackupUtils {
 
 	/**
 	 * Create zip file by adm-zip
-	 * @param vaultPath 
-	 * @param backupZipPath 
+	 * @param vaultPath
+	 * @param backupZipPath
 	 */
 	async createZipByAdmZip(vaultPath: string, backupZipPath: string) {
 		// const AdmZip = require("adm-zip");
@@ -184,12 +204,15 @@ export class LocalBackupUtils {
 
 		// Get excluded patterns from settings
 		const excludedPatterns = this.plugin.settings.excludedDirectoriesValue
-			.split(',')
-			.map(pattern => pattern.trim())
-			.filter(pattern => pattern.length > 0);
+			.split(",")
+			.map((pattern) => pattern.trim())
+			.filter((pattern) => pattern.length > 0);
 
-		if (excludedPatterns.length > 0 && this.plugin.settings.showConsoleLog) {
-			console.log(`Excluding patterns: ${excludedPatterns.join(', ')}`);
+		if (
+			excludedPatterns.length > 0 &&
+			this.plugin.settings.showConsoleLog
+		) {
+			console.log(`Excluding patterns: ${excludedPatterns.join(", ")}`);
 		}
 
 		// If no exclusions, add the entire folder
@@ -197,11 +220,14 @@ export class LocalBackupUtils {
 			zip.addLocalFolder(vaultPath);
 		} else {
 			// Add files and folders selectively
-			const fs = require('fs-extra');
-			const path = require('path');
+			const fs = require("fs-extra");
+			const path = require("path");
 
 			// Function to recursively add files and folders
-			const addFilesRecursively = (dirPath: string, relativePath: string = '') => {
+			const addFilesRecursively = (
+				dirPath: string,
+				relativePath: string = ""
+			) => {
 				const entries = fs.readdirSync(dirPath);
 
 				for (const entry of entries) {
@@ -209,7 +235,12 @@ export class LocalBackupUtils {
 					const entryRelativePath = path.join(relativePath, entry);
 
 					// Check if this path should be excluded
-					if (this.shouldExcludePath(entryRelativePath, excludedPatterns)) {
+					if (
+						this.shouldExcludePath(
+							entryRelativePath,
+							excludedPatterns
+						)
+					) {
 						continue;
 					}
 
@@ -234,39 +265,55 @@ export class LocalBackupUtils {
 
 	/**
 	 * Create file by external archiver
-	 * @param archiverType 
-	 * @param archiverPath 
-	 * @param vaultPath 
-	 * @param backupZipPath 
-	 * @returns 
+	 * @param archiverType
+	 * @param archiverPath
+	 * @param vaultPath
+	 * @param backupZipPath
+	 * @returns
 	 */
-	async createFileByArchiver(archiverType: string, archiverPath: string, archiveFileType: string, vaultPath: string, backupFilePath: string) {
+	async createFileByArchiver(
+		archiverType: string,
+		archiverPath: string,
+		archiveFileType: string,
+		vaultPath: string,
+		backupFilePath: string
+	) {
 		// Get excluded patterns from settings
 		const excludedPatterns = this.plugin.settings.excludedDirectoriesValue
-			.split(',')
-			.map(pattern => pattern.trim())
-			.filter(pattern => pattern.length > 0);
+			.split(",")
+			.map((pattern) => pattern.trim())
+			.filter((pattern) => pattern.length > 0);
 
 		// Prepare exclusion parameters for different archivers
-		let exclusionParams = '';
+		let exclusionParams = "";
 
 		if (excludedPatterns.length > 0) {
 			if (this.plugin.settings.showConsoleLog) {
-				console.log(`Excluding patterns for ${archiverType}: ${excludedPatterns.join(', ')}`);
+				console.log(
+					`Excluding patterns for ${archiverType}: ${excludedPatterns.join(
+						", "
+					)}`
+				);
 			}
 
 			switch (archiverType) {
 				case "sevenZip":
 					// 7-Zip uses -x!pattern for exclusions
-					exclusionParams = excludedPatterns.map(pattern => `-xr!${pattern}`).join(' ');
+					exclusionParams = excludedPatterns
+						.map((pattern) => `-xr!${pattern}`)
+						.join(" ");
 					break;
 				case "winRAR":
 					// WinRAR uses -x pattern for exclusions
-					exclusionParams = excludedPatterns.map(pattern => `-x${pattern}`).join(' ');
+					exclusionParams = excludedPatterns
+						.map((pattern) => `-x${pattern}`)
+						.join(" ");
 					break;
 				case "bandizip":
 					// Bandizip uses -x:pattern for exclusions
-					exclusionParams = excludedPatterns.map(pattern => `-x:"${pattern}"`).join(' ');
+					exclusionParams = excludedPatterns
+						.map((pattern) => `-x:"${pattern}"`)
+						.join(" ");
 					break;
 			}
 		}
@@ -281,11 +328,16 @@ export class LocalBackupUtils {
 
 					exec(command, (error, stdout, stderr) => {
 						if (error) {
-							console.error("Failed to create file by 7-Zip:", error);
+							console.error(
+								"Failed to create file by 7-Zip:",
+								error
+							);
 							reject(error);
 						} else {
 							if (this.plugin.settings.showConsoleLog) {
-								console.log("File created by 7-Zip successfully.");
+								console.log(
+									"File created by 7-Zip successfully."
+								);
 							}
 							resolve();
 						}
@@ -302,11 +354,16 @@ export class LocalBackupUtils {
 
 					exec(command, (error, stdout, stderr) => {
 						if (error) {
-							console.error("Failed to create file by WinRAR:", error);
+							console.error(
+								"Failed to create file by WinRAR:",
+								error
+							);
 							reject(error);
 						} else {
 							if (this.plugin.settings.showConsoleLog) {
-								console.log("File created by WinRAR successfully.");
+								console.log(
+									"File created by WinRAR successfully."
+								);
 							}
 							resolve();
 						}
@@ -323,11 +380,16 @@ export class LocalBackupUtils {
 
 					exec(command, (error, stdout, stderr) => {
 						if (error) {
-							console.error("Failed to create file by Bandizip:", error);
+							console.error(
+								"Failed to create file by Bandizip:",
+								error
+							);
 							reject(error);
 						} else {
 							if (this.plugin.settings.showConsoleLog) {
-								console.log("File created by Bandizip successfully.");
+								console.log(
+									"File created by Bandizip successfully."
+								);
 							}
 							resolve();
 						}
@@ -338,7 +400,6 @@ export class LocalBackupUtils {
 			default:
 				break;
 		}
-
 	}
 
 	/**
@@ -352,22 +413,25 @@ export class LocalBackupUtils {
 			return false;
 		}
 
-		const normalizedPath = filePath.replace(/\\/g, '/');
+		const normalizedPath = filePath.replace(/\\/g, "/");
 
 		for (const pattern of excludedPatterns) {
 			if (!pattern.trim()) continue;
 
 			// Convert glob pattern to regex
-			const regexPattern = pattern.trim()
-				.replace(/\./g, '\\.')   // Escape dots
-				.replace(/\*/g, '.*')    // Convert * to .*
-				.replace(/\?/g, '.');    // Convert ? to .
+			const regexPattern = pattern
+				.trim()
+				.replace(/\./g, "\\.") // Escape dots
+				.replace(/\*/g, ".*") // Convert * to .*
+				.replace(/\?/g, "."); // Convert ? to .
 
-			const regex = new RegExp(regexPattern, 'i');
+			const regex = new RegExp(regexPattern, "i");
 
 			if (regex.test(normalizedPath)) {
 				if (this.plugin.settings.showConsoleLog) {
-					console.log(`Excluding path: ${filePath} (matched pattern: ${pattern})`);
+					console.log(
+						`Excluding path: ${filePath} (matched pattern: ${pattern})`
+					);
 				}
 				return true;
 			}
@@ -375,7 +439,6 @@ export class LocalBackupUtils {
 
 		return false;
 	}
-
 }
 
 /**

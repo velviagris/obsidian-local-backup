@@ -32,6 +32,7 @@ interface LocalBackupPluginSettings {
 	showConsoleLog: boolean;
 	showNotifications: boolean;
 	excludedDirectoriesValue: string;
+	customizedArguments: string;
 }
 
 const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
@@ -56,6 +57,7 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	showConsoleLog: false,
 	showNotifications: true,
 	excludedDirectoriesValue: "",
+	customizedArguments: ""
 };
 
 export default class LocalBackupPlugin extends Plugin {
@@ -219,7 +221,8 @@ export default class LocalBackupPlugin extends Plugin {
 					archiverPathValue,
 					this.settings.archiveFileTypeValue,
 					vaultPath,
-					backupFilePath
+					backupFilePath,
+					this.settings.customizedArguments
 				);
 			} else {
 				await this.utils.createZipByAdmZip(vaultPath, backupFilePath);

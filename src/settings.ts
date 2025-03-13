@@ -206,7 +206,7 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Excluded directories")
 			.setDesc(
-				"Specify directories to exclude from backup. Use comma-separated list with wildcards (e.g., .git, .trash, node_modules, *.mp4)"
+				"Specify directories to exclude from backup. Use comma-separated list with wildcards (e.g., .git, .trash, node_modules, *.mp4) If `External file archiver backup` turns on, it's recommend to clear this setting and customize your arguments in `Customized arguments`"
 			)
 			.addText((text: TextComponent) =>
 				text
@@ -417,6 +417,20 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.archiverUnixPathValue)
 					.onChange(async (value: string) => {
 						this.plugin.settings.archiverUnixPathValue = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Customized arguments")
+			.setDesc(
+				"Add your customized arguments when creating archive files. eg. `-pMySecretPassword` for 7-Zip. For more, read document of your activated archiver."
+			)
+			.addText((text: TextComponent) =>
+				text
+					.setValue(this.plugin.settings.customizedArguments)
+					.onChange(async (value: string) => {
+						this.plugin.settings.customizedArguments = value;
 						await this.plugin.saveSettings();
 					})
 			);

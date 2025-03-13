@@ -276,7 +276,8 @@ export class LocalBackupUtils {
 		archiverPath: string,
 		archiveFileType: string,
 		vaultPath: string,
-		backupFilePath: string
+		backupFilePath: string,
+		customizedArguments: string
 	) {
 		// Get excluded patterns from settings
 		const excludedPatterns = this.plugin.settings.excludedDirectoriesValue
@@ -298,22 +299,23 @@ export class LocalBackupUtils {
 
 			switch (archiverType) {
 				case "sevenZip":
-					// 7-Zip uses -x!pattern for exclusions
+					// 7-Zip uses -xr!pattern for exclusions
 					exclusionParams = excludedPatterns
 						.map((pattern) => `-xr!${pattern}`)
 						.join(" ");
 					break;
 				case "winRAR":
-					// WinRAR uses -x pattern for exclusions
+					// WinRAR uses -xpattern for exclusions
 					exclusionParams = excludedPatterns
 						.map((pattern) => `-x${pattern}`)
 						.join(" ");
 					break;
 				case "bandizip":
-					// Bandizip uses -x:pattern for exclusions
-					exclusionParams = excludedPatterns
-						.map((pattern) => `-x:"${pattern}"`)
-						.join(" ");
+					// Bandizip uses -ex:{list} for exclusions
+					const exclusions = excludedPatterns
+						.map((pattern) => `${pattern}/*`)
+						.join(";");
+					exclusionParams = `-ex:"${exclusions}"`;
 					break;
 			}
 		}
@@ -321,7 +323,7 @@ export class LocalBackupUtils {
 		switch (archiverType) {
 			case "sevenZip":
 				const sevenZipPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" a "${backupFilePath}" "${vaultPath}" ${exclusionParams}`;
+					const command = `"${archiverPath}" a "${backupFilePath}" "${vaultPath}" ${exclusionParams} ${customizedArguments}`;
 					if (this.plugin.settings.showConsoleLog) {
 						console.log(`command: ${command}`);
 					}
@@ -347,7 +349,7 @@ export class LocalBackupUtils {
 
 			case "winRAR":
 				const winRARPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" a -ep1 -rh "${backupFilePath}" "${vaultPath}\\*" ${exclusionParams} -as`;
+					const command = `"${archiverPath}" a -ep1 -rh ${exclusionParams} ${customizedArguments} "${backupFilePath}" "${vaultPath}\\*"`;
 					if (this.plugin.settings.showConsoleLog) {
 						console.log(`command: ${command}`);
 					}
@@ -373,7 +375,7 @@ export class LocalBackupUtils {
 
 			case "bandizip":
 				const bandizipPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" c "${backupFilePath}" "${vaultPath}" ${exclusionParams}`;
+					const command = `"${archiverPath}" c ${exclusionParams} ${customizedArguments} "${backupFilePath}" "${vaultPath}"`;
 					if (this.plugin.settings.showConsoleLog) {
 						console.log(`command: ${command}`);
 					}

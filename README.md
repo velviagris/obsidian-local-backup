@@ -43,7 +43,7 @@ Automatically creates a local backup of the vault.
 
 1. (Experimental) If you have a large size vault and Obsidian stucks on backing up, please try the experimental feature in setting page.
 
-> *For user who owns a vault with large size, it is recommended to turn on `Backup by calling external file archiver` in setting page, the experimental feature of the latest version, then setup the rest of settings of archiver.*
+> *For user who owns a vault with large size, it is recommended to turn on `External file archiver backup` in setting page, the experimental feature of the latest version, then setup the rest of settings of archiver.*
 
 ### Run a local backup command
 

@@ -26,9 +26,7 @@ export class LocalBackupUtils {
 		fileNameFormat: string,
 		lifecycle: string
 	) {
-		if (this.plugin.settings.showConsoleLog) {
-			console.log("Run deleteBackupsByLifeCycle");
-		}
+			this.log("Run deleteBackupsByLifeCycle", "log");
 
 		const os = require("os");
 		const platform = os.platform();
@@ -49,7 +47,7 @@ export class LocalBackupUtils {
 
 		fs.readdir(savePathSetting, (err, files) => {
 			if (err) {
-				console.error(err);
+				this.log(err.message, "error");
 				return;
 			}
 
@@ -72,11 +70,7 @@ export class LocalBackupUtils {
 
 						if (createDate < currentDate) {
 							fs.remove(filePath);
-							if (this.plugin.settings.showConsoleLog) {
-								console.log(
-									`Backup removed by deleteBackupsByLifeCycle: ${filePath}`
-								);
-							}
+								this.log(`Backup removed by deleteBackupsByLifeCycle: ${filePath}`, "log");
 						}
 					}
 				});
@@ -97,9 +91,7 @@ export class LocalBackupUtils {
 		fileNameFormat: string,
 		backupsPerDay: string
 	) {
-		if (this.plugin.settings.showConsoleLog) {
-			console.log("Run deletePerDayBackups");
-		}
+			this.log("Run deletePerDayBackups", "log");
 
 		if (parseInt(backupsPerDay) === 0) {
 			return;
@@ -117,7 +109,7 @@ export class LocalBackupUtils {
 
 		fs.readdir(savePathSetting, (err, files) => {
 			if (err) {
-				console.error(err);
+				this.log(err.message, "error");
 				return;
 			}
 
@@ -157,16 +149,9 @@ export class LocalBackupUtils {
 					const filePath = path.join(savePathSetting, file);
 					fs.remove(filePath, (err) => {
 						if (err) {
-							console.error(
-								`Failed to remove backup file: ${filePath}`,
-								err
-							);
+							this.log(`Failed to remove backup file: ${filePath}, ${err.message}`, "error");
 						} else {
-							if (this.plugin.settings.showConsoleLog) {
-								console.log(
-									`Backup removed by deletePerDayBackups: ${filePath}`
-								);
-							}
+								this.log(`Backup removed by deletePerDayBackups: ${filePath}`, "log");
 						}
 					});
 				});
@@ -212,7 +197,7 @@ export class LocalBackupUtils {
 			excludedPatterns.length > 0 &&
 			this.plugin.settings.showConsoleLog
 		) {
-			console.log(`Excluding patterns: ${excludedPatterns.join(", ")}`);
+			this.log(`Excluding patterns: ${excludedPatterns.join(", ")}`, "log");
 		}
 
 		// If no exclusions, add the entire folder
@@ -289,13 +274,9 @@ export class LocalBackupUtils {
 		let exclusionParams = "";
 
 		if (excludedPatterns.length > 0) {
-			if (this.plugin.settings.showConsoleLog) {
-				console.log(
-					`Excluding patterns for ${archiverType}: ${excludedPatterns.join(
+				this.log(`Excluding patterns for ${archiverType}: ${excludedPatterns.join(
 						", "
-					)}`
-				);
-			}
+					)}`, "log");
 
 			switch (archiverType) {
 				case "sevenZip":
@@ -324,23 +305,14 @@ export class LocalBackupUtils {
 			case "sevenZip":
 				const sevenZipPromise = new Promise<void>((resolve, reject) => {
 					const command = `"${archiverPath}" a "${backupFilePath}" "${vaultPath}" ${exclusionParams} ${customizedArguments}`;
-					if (this.plugin.settings.showConsoleLog) {
-						console.log(`command: ${command}`);
-					}
+						this.log(`command: ${command}`, "log");
 
 					exec(command, (error, stdout, stderr) => {
 						if (error) {
-							console.error(
-								"Failed to create file by 7-Zip:",
-								error
-							);
+							this.log(`Failed to create file by 7-Zip: ${error.message}`, "error");
 							reject(error);
 						} else {
-							if (this.plugin.settings.showConsoleLog) {
-								console.log(
-									"File created by 7-Zip successfully."
-								);
-							}
+								this.log("File created by 7-Zip successfully.", "log");
 							resolve();
 						}
 					});
@@ -350,23 +322,14 @@ export class LocalBackupUtils {
 			case "winRAR":
 				const winRARPromise = new Promise<void>((resolve, reject) => {
 					const command = `"${archiverPath}" a -ep1 -rh ${exclusionParams} ${customizedArguments} "${backupFilePath}" "${vaultPath}\\*"`;
-					if (this.plugin.settings.showConsoleLog) {
-						console.log(`command: ${command}`);
-					}
+						this.log(`command: ${command}`, "log");
 
 					exec(command, (error, stdout, stderr) => {
 						if (error) {
-							console.error(
-								"Failed to create file by WinRAR:",
-								error
-							);
+							this.log(`Failed to create file by WinRAR: ${error.message}`, "error");
 							reject(error);
 						} else {
-							if (this.plugin.settings.showConsoleLog) {
-								console.log(
-									"File created by WinRAR successfully."
-								);
-							}
+								this.log("File created by WinRAR successfully.", "log");
 							resolve();
 						}
 					});
@@ -376,23 +339,14 @@ export class LocalBackupUtils {
 			case "bandizip":
 				const bandizipPromise = new Promise<void>((resolve, reject) => {
 					const command = `"${archiverPath}" c ${exclusionParams} ${customizedArguments} "${backupFilePath}" "${vaultPath}"`;
-					if (this.plugin.settings.showConsoleLog) {
-						console.log(`command: ${command}`);
-					}
+						this.log(`command: ${command}`, "log");
 
 					exec(command, (error, stdout, stderr) => {
 						if (error) {
-							console.error(
-								"Failed to create file by Bandizip:",
-								error
-							);
+							this.log(`Failed to create file by Bandizip: ${error.message}`, "error");
 							reject(error);
 						} else {
-							if (this.plugin.settings.showConsoleLog) {
-								console.log(
-									"File created by Bandizip successfully."
-								);
-							}
+								this.log("File created by Bandizip successfully.", "log");
 							resolve();
 						}
 					});
@@ -430,16 +384,38 @@ export class LocalBackupUtils {
 			const regex = new RegExp(regexPattern, "i");
 
 			if (regex.test(normalizedPath)) {
-				if (this.plugin.settings.showConsoleLog) {
-					console.log(
-						`Excluding path: ${filePath} (matched pattern: ${pattern})`
+					this.log(
+						`Excluding path: ${filePath} (matched pattern: ${pattern})`, "log"
 					);
-				}
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Logging function
+	 * @param message
+	 * @param type
+	 */
+	log(message: string, type: string) {
+		if (this.plugin.settings.showConsoleLog) {
+			switch (type) {
+				case "log":
+					console.log(message);
+					break;
+				case "error":
+					console.error(message);
+					break;
+				case "debug":
+					console.debug(message);
+					break;
+				default:
+					console.log(message);
+					break;
+			}
+		}
 	}
 }
 

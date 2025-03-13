@@ -57,7 +57,7 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	showConsoleLog: false,
 	showNotifications: true,
 	excludedDirectoriesValue: "",
-	customizedArguments: ""
+	customizedArguments: "",
 };
 
 export default class LocalBackupPlugin extends Plugin {
@@ -161,21 +161,22 @@ export default class LocalBackupPlugin extends Plugin {
 				await this.archiveVaultAsync(specificFileName);
 				break;
 			} catch (error) {
-				console.error(
-					`Error during archive attempt ${retryCount + 1}: ${error}`
+				this.utils.log(
+					`Error during archive attempt ${retryCount + 1}: ${error}`,
+					"error"
 				);
 				retryCount++;
 
 				if (retryCount < maxRetries) {
 					await this.delay(retryInterval);
-					if (this.settings.showConsoleLog) {
-						console.log(
-							`Retrying archive attempt ${retryCount + 1}...`
-						);
-					}
+					this.utils.log(
+						`Retrying archive attempt ${retryCount + 1}...`,
+						"log"
+					);
 				} else {
-					console.error(
-						`Failed to create vault backup after ${maxRetries} attempts.`
+					this.utils.log(
+						`Failed to create vault backup after ${maxRetries} attempts.`,
+						"error"
 					);
 					new Notice(
 						`Failed to create vault backup after ${maxRetries} attempts: ${error}`
@@ -228,9 +229,7 @@ export default class LocalBackupPlugin extends Plugin {
 				await this.utils.createZipByAdmZip(vaultPath, backupFilePath);
 			}
 
-			if (this.settings.showConsoleLog) {
-				console.log(`Vault backup created: ${backupFilePath}`);
-			}
+			this.utils.log(`Vault backup created: ${backupFilePath}`, "log");
 			if (this.settings.showNotifications) {
 				new Notice(`Vault backup created: ${backupFilePath}`);
 			}
@@ -304,8 +303,6 @@ export default class LocalBackupPlugin extends Plugin {
 	}
 
 	onunload() {
-		if (this.settings.showConsoleLog) {
-			console.log("Local Backup unloaded");
-		}
+		this.utils.log("Local Backup unloaded", "log");
 	}
 }

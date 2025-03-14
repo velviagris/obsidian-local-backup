@@ -21,41 +21,42 @@ export class NewVersionNotifyModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
-		const release = "0.1.9";
+		const release = this.plugin.manifest.version;
 
-		const header = `### New in Local Backup ${release}\n`;
-		const text = `Thank you for using Local Backup!\n`;
+		contentEl.empty(); // clear modal contents
 
-		const contentDiv = contentEl.createDiv("local-backup-update-modal");
+		const header = `### New in Local Backup ${release}`;
+		const text = `Thank you for using Local Backup!`;
+		const andNow = `**Here are the updates in the latest version:**`;
+
 		const releaseNotes = [
-			"1. Remove `One Way Backup Settings`",
-			"2. Add option to exclude folders using wildcards. (Contributed by @Miguel Primentel)",
-			"3. Add `Backup once on quit`",
-			"4. Add `Apply & Reload` Button on Setting Page.",
-		].join("\n");
+			"Fix issues of external file archiver backup",
+			"Add customized arguments for external file archiver"
+		];
 
-		const andNow = `Here are the updates in the latest version:`;
-		const markdownStr = `${header}\n${text}\n${andNow}\n\n---\n\n${addExtraHashToHeadings(
-			releaseNotes
-		)}`;
+		const markdownStr = `${header}\n\n${text}\n\n${andNow}\n\n---\n\n${releaseNotes
+			.map((note, index) => `- ${note}`)
+			.join("\n")}`;
 
-		new Setting(contentEl).addButton((btn) =>
-			btn
-				.setButtonText("Okey")
-				.setCta()
-				.onClick(() => {
-					this.plugin.saveSettings();
+		const container = contentEl.createDiv("local-backup-update-modal");
 
-					this.close();
-				})
-		);
-
-		void MarkdownRenderer.renderMarkdown(
+		MarkdownRenderer.renderMarkdown(
 			markdownStr,
-			contentDiv,
-			this.app.vault.getRoot().path,
-			new Component()
+			container,
+			"",
+			this.plugin
 		);
+
+		// add close button
+		const closeButton = container.createEl("button", { text: "Close" });
+		closeButton.addEventListener("click", () => {
+			this.close();
+		});
+
+		// adjust style
+		container.style.padding = "16px";
+		container.style.lineHeight = "1.6";
+		closeButton.style.marginTop = "16px";
 	}
 
 	onClose() {

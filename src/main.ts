@@ -28,7 +28,6 @@ interface LocalBackupPluginSettings {
 	archiveFileTypeValue: string;
 	archiverWinPathValue: string;
 	archiverUnixPathValue: string;
-	showRibbonIcon: boolean;
 	showConsoleLog: boolean;
 	showNotifications: boolean;
 	excludedDirectoriesValue: string;
@@ -53,7 +52,6 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	archiveFileTypeValue: "zip",
 	archiverWinPathValue: "",
 	archiverUnixPathValue: "",
-	showRibbonIcon: true,
 	showConsoleLog: false,
 	showNotifications: true,
 	excludedDirectoriesValue: "",
@@ -71,7 +69,7 @@ export default class LocalBackupPlugin extends Plugin {
 		const settingTab = new LocalBackupSettingTab(this.app, this);
 		this.addSettingTab(settingTab);
 
-		await this.loadUtis();
+		await this.loadUtils();
 
 		// startup notice
 		try {
@@ -108,17 +106,6 @@ export default class LocalBackupPlugin extends Plugin {
 			},
 		});
 
-		// Add ribbon icon
-		if (this.settings.showRibbonIcon) {
-			addIcon("sidebar-icon", ICON_DATA);
-			this.addRibbonIcon("sidebar-icon", "Run local backup", () => {
-				if (this.settings.showNotifications) {
-					new Notice("Running local backup...");
-				}
-				this.archiveVaultWithRetryAsync();
-			});
-		}
-
 		// run startup codes.
 		if (this.settings.startupBackupStatus) {
 			await this.archiveVaultWithRetryAsync();
@@ -141,7 +128,7 @@ export default class LocalBackupPlugin extends Plugin {
 		);
 	}
 
-	async loadUtis() {
+	async loadUtils() {
 		this.utils = new LocalBackupUtils(this.app, this);
 	}
 

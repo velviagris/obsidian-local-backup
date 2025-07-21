@@ -297,18 +297,6 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Show ribbon icon")
-			.setDesc(ribbonIconDesc)
-			.addToggle((toggle: ToggleComponent) =>
-				toggle
-					.setValue(this.plugin.settings.showRibbonIcon)
-					.onChange(async (value: boolean) => {
-						this.plugin.settings.showRibbonIcon = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
 			.setName("Show console logs")
 			.setDesc("Enable/Disable console log statements")
 			.addToggle((toggle: ToggleComponent) =>

@@ -30,8 +30,9 @@ export class NewVersionNotifyModal extends Modal {
 		const andNow = `**Here are the updates in the latest version:**`;
 
 		const releaseNotes = [
-			"Fix issues of external file archiver backup",
-			"Add customized arguments for external file archiver"
+			"Remove ribbon icon",
+			"Add included directories backup filter by raozhiyong11",
+			"Refactor backup output path handling"
 		];
 
 		const markdownStr = `${header}\n\n${text}\n\n${andNow}\n\n---\n\n${releaseNotes

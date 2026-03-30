@@ -187,21 +187,27 @@ export class LocalBackupUtils {
 		// const AdmZip = require("adm-zip");
 		const zip = new AdmZip();
 
-		// Get excluded patterns from settings
-		const excludedPatterns = this.plugin.settings.excludedDirectoriesValue
-			.split(",")
-			.map((pattern) => pattern.trim())
-			.filter((pattern) => pattern.length > 0);
+		const excludedPatterns = this.parsePatternList(
+			this.plugin.settings.excludedDirectoriesValue
+		);
+		const includedPatterns = this.parsePatternList(
+			this.plugin.settings.includedDirectoriesValue
+		);
 
 		if (
-			excludedPatterns.length > 0 &&
+			(includedPatterns.length > 0 || excludedPatterns.length > 0) &&
 			this.plugin.settings.showConsoleLog
 		) {
-			this.log(`Excluding patterns: ${excludedPatterns.join(", ")}`, "log");
+			if (includedPatterns.length > 0) {
+				this.log(`Including patterns: ${includedPatterns.join(", ")}`, "log");
+			}
+			if (excludedPatterns.length > 0) {
+				this.log(`Excluding patterns: ${excludedPatterns.join(", ")}`, "log");
+			}
 		}
 
-		// If no exclusions, add the entire folder
-		if (excludedPatterns.length === 0) {
+		// If no filters, add the entire folder
+		if (excludedPatterns.length === 0 && includedPatterns.length === 0) {
 			zip.addLocalFolder(vaultPath);
 		} else {
 			// Add files and folders selectively
@@ -218,23 +224,18 @@ export class LocalBackupUtils {
 				for (const entry of entries) {
 					const fullPath = path.join(dirPath, entry);
 					const entryRelativePath = path.join(relativePath, entry);
+					const stats = fs.statSync(fullPath);
 
-					// Check if this path should be excluded
-					if (
-						this.shouldExcludePath(
-							entryRelativePath,
-							excludedPatterns
-						)
-					) {
+					if (this.shouldExcludePath(entryRelativePath, excludedPatterns)) {
 						continue;
 					}
 
-					const stats = fs.statSync(fullPath);
-
 					if (stats.isDirectory()) {
-						// Recursively add subdirectories
+						// Keep walking the tree so nested included files can still be found.
 						addFilesRecursively(fullPath, entryRelativePath);
-					} else {
+					} else if (
+						this.shouldIncludePath(entryRelativePath, includedPatterns)
+					) {
 						// Add file to zip
 						zip.addLocalFile(fullPath, relativePath);
 					}
@@ -264,14 +265,21 @@ export class LocalBackupUtils {
 		backupFilePath: string,
 		customizedArguments: string
 	) {
-		// Get excluded patterns from settings
-		const excludedPatterns = this.plugin.settings.excludedDirectoriesValue
-			.split(",")
-			.map((pattern) => pattern.trim())
-			.filter((pattern) => pattern.length > 0);
+		const excludedPatterns = this.parsePatternList(
+			this.plugin.settings.excludedDirectoriesValue
+		);
+		const includedPatterns = this.parsePatternList(
+			this.plugin.settings.includedDirectoriesValue
+		);
+		const includedEntries = this.collectIncludedEntries(
+			vaultPath,
+			includedPatterns,
+			excludedPatterns
+		);
 
 		// Prepare exclusion parameters for different archivers
 		let exclusionParams = "";
+		let inputSources = `"${vaultPath}"`;
 
 		if (excludedPatterns.length > 0) {
 				this.log(`Excluding patterns for ${archiverType}: ${excludedPatterns.join(
@@ -301,13 +309,25 @@ export class LocalBackupUtils {
 			}
 		}
 
+		if (includedPatterns.length > 0) {
+			this.log(`Including patterns for ${archiverType}: ${includedPatterns.join(", ")}`, "log");
+
+			if (includedEntries.length === 0) {
+				throw new Error(
+					"No files or directories matched the Included directories setting."
+				);
+			}
+
+			inputSources = includedEntries.map((entry) => `"${entry}"`).join(" ");
+		}
+
 		switch (archiverType) {
 			case "sevenZip":
 				const sevenZipPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" a "${backupFilePath}" "${vaultPath}" ${exclusionParams} ${customizedArguments}`;
+					const command = `"${archiverPath}" a "${backupFilePath}" ${inputSources} ${exclusionParams} ${customizedArguments}`;
 						this.log(`command: ${command}`, "log");
 
-					exec(command, (error, stdout, stderr) => {
+					exec(command, { cwd: includedPatterns.length > 0 ? vaultPath : undefined }, (error, stdout, stderr) => {
 						if (error) {
 							this.log(`Failed to create file by 7-Zip: ${error.message}`, "error");
 							reject(error);
@@ -321,10 +341,10 @@ export class LocalBackupUtils {
 
 			case "winRAR":
 				const winRARPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" a -ep1 -rh ${exclusionParams} ${customizedArguments} "${backupFilePath}" "${vaultPath}\\*"`;
+					const command = `"${archiverPath}" a -ep1 -rh ${exclusionParams} ${customizedArguments} "${backupFilePath}" ${includedPatterns.length > 0 ? inputSources : `"${vaultPath}\\*"`}`;
 						this.log(`command: ${command}`, "log");
 
-					exec(command, (error, stdout, stderr) => {
+					exec(command, { cwd: includedPatterns.length > 0 ? vaultPath : undefined }, (error, stdout, stderr) => {
 						if (error) {
 							this.log(`Failed to create file by WinRAR: ${error.message}`, "error");
 							reject(error);
@@ -338,10 +358,10 @@ export class LocalBackupUtils {
 
 			case "bandizip":
 				const bandizipPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" c ${exclusionParams} ${customizedArguments} "${backupFilePath}" "${vaultPath}"`;
+					const command = `"${archiverPath}" c ${exclusionParams} ${customizedArguments} "${backupFilePath}" ${inputSources}`;
 						this.log(`command: ${command}`, "log");
 
-					exec(command, (error, stdout, stderr) => {
+					exec(command, { cwd: includedPatterns.length > 0 ? vaultPath : undefined }, (error, stdout, stderr) => {
 						if (error) {
 							this.log(`Failed to create file by Bandizip: ${error.message}`, "error");
 							reject(error);
@@ -358,6 +378,60 @@ export class LocalBackupUtils {
 		}
 	}
 
+	parsePatternList(value: string): string[] {
+		return value
+			.split(",")
+			.map((pattern) => pattern.trim())
+			.filter((pattern) => pattern.length > 0);
+	}
+
+	collectIncludedEntries(
+		vaultPath: string,
+		includedPatterns: string[],
+		excludedPatterns: string[]
+	): string[] {
+		if (includedPatterns.length === 0) {
+			return [];
+		}
+
+		const collectedEntries = new Set<string>();
+
+		const walk = (dirPath: string, relativePath: string = "") => {
+			const entries = fs.readdirSync(dirPath);
+
+			for (const entry of entries) {
+				const fullPath = path.join(dirPath, entry);
+				const entryRelativePath = path.join(relativePath, entry);
+				const stats = fs.statSync(fullPath);
+
+				if (this.shouldExcludePath(entryRelativePath, excludedPatterns)) {
+					continue;
+				}
+
+				if (
+					stats.isDirectory() &&
+					this.shouldIncludePath(entryRelativePath, includedPatterns)
+				) {
+					collectedEntries.add(entryRelativePath.replace(/\\/g, "/"));
+					continue;
+				}
+
+				if (stats.isDirectory()) {
+					walk(fullPath, entryRelativePath);
+					continue;
+				}
+
+				if (this.shouldIncludePath(entryRelativePath, includedPatterns)) {
+					collectedEntries.add(entryRelativePath.replace(/\\/g, "/"));
+				}
+			}
+		};
+
+		walk(vaultPath);
+
+		return Array.from(collectedEntries);
+	}
+
 	/**
 	 * Check if a path should be excluded based on the wildcards
 	 * @param filePath The path to check
@@ -369,9 +443,25 @@ export class LocalBackupUtils {
 			return false;
 		}
 
+		return this.matchesPatterns(filePath, excludedPatterns, "Excluding");
+	}
+
+	shouldIncludePath(filePath: string, includedPatterns: string[]): boolean {
+		if (!includedPatterns || includedPatterns.length === 0) {
+			return true;
+		}
+
+		return this.matchesPatterns(filePath, includedPatterns, "Including");
+	}
+
+	matchesPatterns(
+		filePath: string,
+		patterns: string[],
+		actionLabel: string
+	): boolean {
 		const normalizedPath = filePath.replace(/\\/g, "/");
 
-		for (const pattern of excludedPatterns) {
+		for (const pattern of patterns) {
 			if (!pattern.trim()) continue;
 
 			// Convert glob pattern to regex
@@ -385,7 +475,7 @@ export class LocalBackupUtils {
 
 			if (regex.test(normalizedPath)) {
 					this.log(
-						`Excluding path: ${filePath} (matched pattern: ${pattern})`, "log"
+						`${actionLabel} path: ${filePath} (matched pattern: ${pattern})`, "log"
 					);
 				return true;
 			}

@@ -1,5 +1,7 @@
 # Local Backup
 
+[中文说明](README.zh.md)
+
 ![GitHub](https://img.shields.io/github/license/cgcel/obsidian-local-backup)
 ![Github all releases](https://img.shields.io/github/downloads/cgcel/obsidian-local-backup/total.svg)
 ![GitLab latest release](https://badgen.net/github/release/cgcel/obsidian-local-backup)
@@ -18,6 +20,7 @@ Automatically creates a local backup of the vault.
 - Retry after failures
 - Create specific file
 - Ignore folders and files using wildcards
+- Back up only selected folders and files using wildcards
 
 ## How to use
 
@@ -32,8 +35,18 @@ Automatically creates a local backup of the vault.
 
 1. Setup the output path depends on your computer platform.
 2. Setup the Windows and Unix output path while you using these two platforms.
+3. `Included directories` and `Excluded directories` both accept comma-separated values and support the same wildcard matching rules.
+4. If `Included directories` is empty, the whole vault is backed up before exclusions are applied.
+5. If `Included directories` is set, only matching folders and files are backed up, then `Excluded directories` can be used to remove matches from that result.
 
 > *If you turn on interval backups, it is recommended to set a reasonable bakcup frequency, e.g. >=10min, this plugin costs CPU resources and Disk I/O resources, backup frequently might cause lagging.*
+
+##### Include and exclude examples
+
+- Back up only the Obsidian config folder: set `Included directories` to `.obsidian`
+- Back up only selected content: set `Included directories` to `.obsidian, Templates, *.canvas`
+- Back up the whole vault except some paths: leave `Included directories` empty and set `Excluded directories` to `.git, .trash, node_modules, *.mp4`
+- Combine both filters: set `Included directories` to `.obsidian, Templates` and `Excluded directories` to `workspace.json`
 
 #### File Archiver Settings (Optional)
 
@@ -102,7 +115,7 @@ Click the sidebar icon.
 
 You could consider buy me a coffee if the plugin saves your time!
 
-<div class="local-backup-bmac-container"><a href="https://www.buymeacoffee.com/cgcel" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 144px !important;" ></a></div>
+https://paypal.me/gris0297
 
 ## License
 

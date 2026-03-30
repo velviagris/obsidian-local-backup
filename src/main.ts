@@ -4,8 +4,8 @@ import { LocalBackupSettingTab } from "./settings";
 import {
 	replaceDatePlaceholdersWithValues,
 	LocalBackupUtils,
-	getDefaultPath,
 	getDefaultName,
+	resolveBackupOutputPath,
 } from "./utils";
 import { ICON_DATA } from "./constants";
 import { NewVersionNotifyModal, PromptModal } from "./modals";
@@ -18,8 +18,8 @@ interface LocalBackupPluginSettings {
 	backupsPerDayValue: string;
 	maxRetriesValue: string;
 	retryIntervalValue: string;
-	winSavePathValue: string;
-	unixSavePathValue: string;
+	/** Optional; empty uses OBSIDIAN_LOCAL_BACKUP_PATH env, then vault parent. */
+	backupOutputPathValue: string;
 	fileNameFormatValue: string;
 	intervalBackupStatus: boolean;
 	backupFrequencyValue: string;
@@ -43,9 +43,8 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	backupsPerDayValue: "3",
 	maxRetriesValue: "1",
 	retryIntervalValue: "100",
-	winSavePathValue: getDefaultPath(),
-	unixSavePathValue: getDefaultPath(),
-	fileNameFormatValue: getDefaultName(),
+	backupOutputPathValue: "",
+	fileNameFormatValue: "Backup-%Y_%m_%d-%H_%M_%S",
 	intervalBackupStatus: false,
 	backupFrequencyValue: "10",
 	callingArchiverStatus: false,
@@ -123,11 +122,27 @@ export default class LocalBackupPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign(
+		const raw = await this.loadData();
+		const merged = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+			raw
+		) as LocalBackupPluginSettings;
+		if (
+			raw &&
+			!("backupOutputPathValue" in raw) &&
+			(("winSavePathValue" in raw && (raw as any).winSavePathValue) ||
+				("unixSavePathValue" in raw && (raw as any).unixSavePathValue))
+		) {
+			const legacy =
+				process.platform === "win32"
+					? (raw as any).winSavePathValue
+					: (raw as any).unixSavePathValue;
+			if (typeof legacy === "string" && legacy.trim() !== "") {
+				merged.backupOutputPathValue = legacy;
+			}
+		}
+		this.settings = merged;
 	}
 
 	async loadUtils() {
@@ -136,7 +151,10 @@ export default class LocalBackupPlugin extends Plugin {
 
 	async saveSettings() {
 		this.settings.versionValue = this.manifest.version;
-		await this.saveData(this.settings);
+		const payload = { ...this.settings } as Record<string, unknown>;
+		delete payload.winSavePathValue;
+		delete payload.unixSavePathValue;
+		await this.saveData(payload);
 	}
 
 	async archiveVaultWithRetryAsync(specificFileName: string = "") {
@@ -186,17 +204,18 @@ export default class LocalBackupPlugin extends Plugin {
 			const backupZipName = `${fileNameWithDateValues}.zip`;
 			const vaultPath = (this.app.vault.adapter as any).basePath;
 			const platform = process.platform;
-			let savePathValue = "";
+			const savePathValue = resolveBackupOutputPath(
+				this.app,
+				this.settings.backupOutputPathValue
+			);
 			let archiverPathValue = "";
-			let lifecycleValue = "";
-			let backupsPerDayValue = "";
 			if (platform === "win32") {
-				savePathValue = this.settings.winSavePathValue;
 				archiverPathValue = this.settings.archiverWinPathValue;
 			} else if (platform === "linux" || platform === "darwin") {
-				savePathValue = this.settings.unixSavePathValue;
 				archiverPathValue = this.settings.archiverUnixPathValue;
 			}
+			let lifecycleValue = "";
+			let backupsPerDayValue = "";
 			lifecycleValue = this.settings.lifecycleValue;
 			backupsPerDayValue = this.settings.backupsPerDayValue;
 			let backupFilePath = join(savePathValue, backupZipName);
@@ -225,13 +244,11 @@ export default class LocalBackupPlugin extends Plugin {
 
 			this.utils.deleteBackupsByLifeCycle(
 				savePathValue,
-				savePathValue,
 				this.settings.fileNameFormatValue,
 				lifecycleValue
 			);
 
 			this.utils.deletePerDayBackups(
-				savePathValue,
 				savePathValue,
 				this.settings.fileNameFormatValue,
 				backupsPerDayValue
@@ -288,6 +305,7 @@ export default class LocalBackupPlugin extends Plugin {
 	async restoreDefault() {
 		this.settings = { ...DEFAULT_SETTINGS };
 		this.settings.versionValue = this.manifest.version;
+		this.settings.fileNameFormatValue = getDefaultName(this.app);
 		await this.saveSettings();
 	}
 

@@ -1,9 +1,10 @@
 import * as path from "path";
 import * as fs from "fs-extra";
 import AdmZip from "adm-zip";
-import { exec } from "child_process";
+import { exec, execSync } from "child_process";
 import { App } from "obsidian";
 import LocalBackupPlugin from "./main";
+import { BACKUP_OUTPUT_PATH_ENV_KEY } from "./constants";
 
 export class LocalBackupUtils {
 	plugin: LocalBackupPlugin;
@@ -14,29 +15,19 @@ export class LocalBackupUtils {
 
 	/**
 	 * Delete backups by lifecycleSetting
-	 * @param winSavePath
-	 * @param unixSavePath
+	 * @param savePath Backup directory (resolved)
 	 * @param fileNameFormat
 	 * @param lifecycle
 	 * @returns
 	 */
 	deleteBackupsByLifeCycle(
-		winSavePath: string,
-		unixSavePath: string,
+		savePath: string,
 		fileNameFormat: string,
 		lifecycle: string
 	) {
-			this.log("Run deleteBackupsByLifeCycle", "log");
+		this.log("Run deleteBackupsByLifeCycle", "log");
 
-		const os = require("os");
-		const platform = os.platform();
-		let savePathSetting = "";
-
-		if (platform === "win32") {
-			savePathSetting = winSavePath;
-		} else if (platform === "linux" || platform === "darwin") {
-			savePathSetting = unixSavePath;
-		}
+		const savePathSetting = savePath;
 
 		const currentDate = new Date();
 
@@ -80,32 +71,22 @@ export class LocalBackupUtils {
 
 	/**
 	 * Delete backups by backupsPerDayValue
-	 * @param winSavePath
-	 * @param unixSavePath
+	 * @param savePath Backup directory (resolved)
 	 * @param fileNameFormat
 	 * @param backupsPerDay
 	 */
 	deletePerDayBackups(
-		winSavePath: string,
-		unixSavePath: string,
+		savePath: string,
 		fileNameFormat: string,
 		backupsPerDay: string
 	) {
-			this.log("Run deletePerDayBackups", "log");
+		this.log("Run deletePerDayBackups", "log");
 
 		if (parseInt(backupsPerDay) === 0) {
 			return;
 		}
 
-		const os = require("os");
-		const platform = os.platform();
-		let savePathSetting = "";
-
-		if (platform === "win32") {
-			savePathSetting = winSavePath;
-		} else if (platform === "linux" || platform === "darwin") {
-			savePathSetting = unixSavePath;
-		}
+		const savePathSetting = savePath;
 
 		fs.readdir(savePathSetting, (err, files) => {
 			if (err) {
@@ -567,21 +548,92 @@ export const getDatePlaceholdersForISO = (includeTime: boolean) => {
 };
 
 /**
- * Get path of current vault
- * @returns
+ * Parent directory of the vault folder (legacy default backup location).
  */
-export function getDefaultPath(): string {
-	const defaultPath = path.dirname((this.app.vault.adapter as any).basePath);
-	// this.settings.savePathSetting = defaultPath
-	return defaultPath;
+export function getDefaultPath(app: App): string {
+	return path.dirname((app.vault.adapter as any).basePath);
 }
 
 /**
- * Get default backup name
- * @returns
+ * Default backup file name pattern including vault name.
  */
-export function getDefaultName(): string {
-	const vaultName = this.app.vault.getName();
+export function getDefaultName(app: App): string {
+	const vaultName = app.vault.getName();
 	const defaultDatePlaceholders = getDatePlaceholdersForISO(true);
 	return `${vaultName}-Backup-${defaultDatePlaceholders}`;
+}
+
+/**
+ * Windows: read User / Machine env from registry (System Properties / setx).
+ * Electron's renderer often does not mirror these into process.env.
+ */
+function readWindowsRegistryEnv(key: string): string | undefined {
+	const queries = [
+		`reg query "HKCU\\Environment" /v ${key}`,
+		`reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment" /v ${key}`,
+	];
+	for (const cmd of queries) {
+		try {
+			const out = execSync(cmd, {
+				encoding: "utf8",
+				windowsHide: true,
+				maxBuffer: 1024 * 1024,
+			});
+			for (const line of out.split(/\r?\n/)) {
+				if (!line.includes(key) || !line.includes("REG_")) {
+					continue;
+				}
+				const m = line.match(/REG_(?:SZ|EXPAND_SZ)\s+(.+)$/);
+				if (m) {
+					return m[1].trim();
+				}
+			}
+		} catch {
+			/* key not in this hive */
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Reads {@link BACKUP_OUTPUT_PATH_ENV_KEY} from the current process.
+ * On Windows, matches env keys case-insensitively, then falls back to registry
+ * (User/Machine) so values set in System Properties work even when the
+ * renderer's process.env is incomplete.
+ */
+function getBackupPathFromEnv(): string | undefined {
+	const key = BACKUP_OUTPUT_PATH_ENV_KEY;
+	let v = process.env[key]?.trim();
+	if (v) return v;
+	if (process.platform === "win32") {
+		const found = Object.keys(process.env).find(
+			(k) => k.toUpperCase() === key.toUpperCase()
+		);
+		if (found) {
+			v = process.env[found]?.trim();
+			if (v) return v;
+		}
+		v = readWindowsRegistryEnv(key)?.trim();
+		if (v) return v;
+	}
+	return undefined;
+}
+
+/**
+ * Resolves backup output directory: env {@link BACKUP_OUTPUT_PATH_ENV_KEY} wins,
+ * then non-empty plugin setting, then parent of vault.
+ */
+export function resolveBackupOutputPath(
+	app: App,
+	configuredPath: string
+): string {
+	const fromEnv = getBackupPathFromEnv();
+	if (fromEnv) {
+		return fromEnv;
+	}
+	const fromConfig = configuredPath?.trim();
+	if (fromConfig) {
+		return fromConfig;
+	}
+	return getDefaultPath(app);
 }

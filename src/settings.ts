@@ -14,14 +14,14 @@ import {
 } from "obsidian";
 import LocalBackupPlugin from "./main";
 import "./styles.css";
+import { BACKUP_OUTPUT_PATH_ENV_KEY } from "./constants";
 
 // Add this type definition
 interface LocalBackupPluginSettings {
 	startupBackupStatus: boolean;
 	lifecycleValue: string;
 	backupsPerDayValue: string;
-	winSavePathValue: string;
-	unixSavePathValue: string;
+	backupOutputPathValue: string;
 	fileNameFormatValue: string;
 	intervalBackupStatus: boolean;
 	backupFrequencyValue: string;
@@ -136,29 +136,15 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Windows output path (optional)")
+			.setName("Backup output path (optional)")
 			.setDesc(
-				"Setup a Windows backup storage path. eg. D:\\documents\\Obsidian"
+				`Leave empty to use ${BACKUP_OUTPUT_PATH_ENV_KEY} (if set), otherwise the parent folder of the vault. This field overrides the variable when non-empty. On Windows, define the variable in System Properties (User or System) or with setx — a value set only in the current CMD window (set VAR=...) is not saved and Obsidian cannot see it; restart Obsidian after changing persistent variables. Examples: D:\\Backups\\Obsidian or /home/user/Backups/Obsidian.`
 			)
 			.addText((text: TextComponent) =>
 				text
-					.setValue(this.plugin.settings.winSavePathValue)
+					.setValue(this.plugin.settings.backupOutputPathValue)
 					.onChange(async (value: string) => {
-						this.plugin.settings.winSavePathValue = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("Linux/MacOS output path (optional)")
-			.setDesc(
-				"Setup a Unix backup storage path. eg. /home/user/Documents/Obsidian"
-			)
-			.addText((text: TextComponent) =>
-				text
-					.setValue(this.plugin.settings.unixSavePathValue)
-					.onChange(async (value: string) => {
-						this.plugin.settings.unixSavePathValue = value;
+						this.plugin.settings.backupOutputPathValue = value;
 						await this.plugin.saveSettings();
 					})
 			);

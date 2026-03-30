@@ -36,6 +36,7 @@ interface LocalBackupPluginSettings {
 	archiverWinPathValue: string;
 	archiverUnixPathValue: string;
 	excludedDirectoriesValue: string; // Added for excluded directories
+	includedDirectoriesValue: string;
 }
 
 export class LocalBackupSettingTab extends PluginSettingTab {
@@ -214,6 +215,21 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.excludedDirectoriesValue)
 					.onChange(async (value: string) => {
 						this.plugin.settings.excludedDirectoriesValue = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Included directories")
+			.setDesc(
+				"Specify directories or files to include in backup. Use comma-separated list with wildcards (e.g., .obsidian, Templates, *.canvas). Leave empty to back up the whole vault before exclusions are applied."
+			)
+			.addText((text: TextComponent) =>
+				text
+					.setPlaceholder(".obsidian")
+					.setValue(this.plugin.settings.includedDirectoriesValue)
+					.onChange(async (value: string) => {
+						this.plugin.settings.includedDirectoriesValue = value;
 						await this.plugin.saveSettings();
 					})
 			);

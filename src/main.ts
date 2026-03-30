@@ -31,6 +31,7 @@ interface LocalBackupPluginSettings {
 	showConsoleLog: boolean;
 	showNotifications: boolean;
 	excludedDirectoriesValue: string;
+	includedDirectoriesValue: string;
 	customizedArguments: string;
 }
 
@@ -55,6 +56,7 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	showConsoleLog: false,
 	showNotifications: true,
 	excludedDirectoriesValue: "",
+	includedDirectoriesValue: "",
 	customizedArguments: "",
 };
 

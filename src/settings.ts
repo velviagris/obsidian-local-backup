@@ -21,7 +21,8 @@ interface LocalBackupPluginSettings {
 	startupBackupStatus: boolean;
 	lifecycleValue: string;
 	backupsPerDayValue: string;
-	backupOutputPathValue: string;
+	winSavePathValue: string;
+	unixSavePathValue: string;
 	fileNameFormatValue: string;
 	intervalBackupStatus: boolean;
 	backupFrequencyValue: string;
@@ -64,6 +65,18 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 				"Please close and reopen Obsidian for this setting to take effect."
 			)
 		);
+
+		new Setting(containerEl)
+			.setName("Show ribbon icon")
+			.setDesc(ribbonIconDesc)
+			.addToggle((toggle: ToggleComponent) =>
+				toggle
+					.setValue(this.plugin.settings.showRibbonIcon)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.showRibbonIcon = value;
+						await this.plugin.saveSettings();
+					})
+			);
 
 		new Setting(containerEl)
 			.setName("Backup once on startup")
@@ -135,16 +148,30 @@ export class LocalBackupSettingTab extends PluginSettingTab {
 					})
 			);
 
+		const backupPathEnvDescBase = `Leave empty to use the environment variable ${BACKUP_OUTPUT_PATH_ENV_KEY} (if set), otherwise the parent folder of the vault. A non-empty path here overrides that variable on this OS. Set ${BACKUP_OUTPUT_PATH_ENV_KEY} in a persistent user environment (Windows: System Properties or setx; Linux/macOS: shell profile, systemd user environment, etc.). Values set only in the current terminal session are not visible to Obsidian; restart Obsidian after changing persistent variables.`;
+
 		new Setting(containerEl)
-			.setName("Backup output path (optional)")
+			.setName("Windows output path (optional)")
+			.setDesc(`${backupPathEnvDescBase} Example: D:\\Backups\\Obsidian`)
+			.addText((text: TextComponent) =>
+				text
+					.setValue(this.plugin.settings.winSavePathValue)
+					.onChange(async (value: string) => {
+						this.plugin.settings.winSavePathValue = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Linux / macOS output path (optional)")
 			.setDesc(
-				`Leave empty to use ${BACKUP_OUTPUT_PATH_ENV_KEY} (if set), otherwise the parent folder of the vault. This field overrides the variable when non-empty. On Windows, define the variable in System Properties (User or System) or with setx — a value set only in the current CMD window (set VAR=...) is not saved and Obsidian cannot see it; restart Obsidian after changing persistent variables. Examples: D:\\Backups\\Obsidian or /home/user/Backups/Obsidian.`
+				`${backupPathEnvDescBase} Example: /home/user/Backups/Obsidian`
 			)
 			.addText((text: TextComponent) =>
 				text
-					.setValue(this.plugin.settings.backupOutputPathValue)
+					.setValue(this.plugin.settings.unixSavePathValue)
 					.onChange(async (value: string) => {
-						this.plugin.settings.backupOutputPathValue = value;
+						this.plugin.settings.unixSavePathValue = value;
 						await this.plugin.saveSettings();
 					})
 			);

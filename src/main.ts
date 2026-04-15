@@ -18,8 +18,9 @@ interface LocalBackupPluginSettings {
 	backupsPerDayValue: string;
 	maxRetriesValue: string;
 	retryIntervalValue: string;
-	/** Optional; empty uses OBSIDIAN_LOCAL_BACKUP_PATH env, then vault parent. */
-	backupOutputPathValue: string;
+	/** Optional per OS; empty uses OBSIDIAN_LOCAL_BACKUP_PATH env, then vault parent. */
+	winSavePathValue: string;
+	unixSavePathValue: string;
 	fileNameFormatValue: string;
 	intervalBackupStatus: boolean;
 	backupFrequencyValue: string;
@@ -28,6 +29,7 @@ interface LocalBackupPluginSettings {
 	archiveFileTypeValue: string;
 	archiverWinPathValue: string;
 	archiverUnixPathValue: string;
+	showRibbonIcon: boolean;
 	showConsoleLog: boolean;
 	showNotifications: boolean;
 	excludedDirectoriesValue: string;
@@ -43,7 +45,8 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	backupsPerDayValue: "3",
 	maxRetriesValue: "1",
 	retryIntervalValue: "100",
-	backupOutputPathValue: "",
+	winSavePathValue: "",
+	unixSavePathValue: "",
 	fileNameFormatValue: "Backup-%Y_%m_%d-%H_%M_%S",
 	intervalBackupStatus: false,
 	backupFrequencyValue: "10",
@@ -52,6 +55,7 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 	archiveFileTypeValue: "zip",
 	archiverWinPathValue: "",
 	archiverUnixPathValue: "",
+	showRibbonIcon: true,
 	showConsoleLog: false,
 	showNotifications: true,
 	excludedDirectoriesValue: "",
@@ -71,6 +75,16 @@ export default class LocalBackupPlugin extends Plugin {
 		this.addSettingTab(settingTab);
 
 		await this.loadUtils();
+
+		if (this.settings.showRibbonIcon) {
+			this.addRibbonIcon(
+				"archive",
+				"Run local backup",
+				async () => {
+					await this.archiveVaultWithRetryAsync();
+				}
+			);
+		}
 
 		// startup notice
 		try {
@@ -128,18 +142,16 @@ export default class LocalBackupPlugin extends Plugin {
 			DEFAULT_SETTINGS,
 			raw
 		) as LocalBackupPluginSettings;
-		if (
-			raw &&
-			!("backupOutputPathValue" in raw) &&
-			(("winSavePathValue" in raw && (raw as any).winSavePathValue) ||
-				("unixSavePathValue" in raw && (raw as any).unixSavePathValue))
-		) {
-			const legacy =
-				process.platform === "win32"
-					? (raw as any).winSavePathValue
-					: (raw as any).unixSavePathValue;
-			if (typeof legacy === "string" && legacy.trim() !== "") {
-				merged.backupOutputPathValue = legacy;
+		const r = raw as Record<string, unknown> | null | undefined;
+		if (r && typeof r.backupOutputPathValue === "string") {
+			const unified = r.backupOutputPathValue.trim();
+			if (unified) {
+				if (!merged.winSavePathValue?.trim()) {
+					merged.winSavePathValue = unified;
+				}
+				if (!merged.unixSavePathValue?.trim()) {
+					merged.unixSavePathValue = unified;
+				}
 			}
 		}
 		this.settings = merged;
@@ -152,8 +164,7 @@ export default class LocalBackupPlugin extends Plugin {
 	async saveSettings() {
 		this.settings.versionValue = this.manifest.version;
 		const payload = { ...this.settings } as Record<string, unknown>;
-		delete payload.winSavePathValue;
-		delete payload.unixSavePathValue;
+		delete payload.backupOutputPathValue;
 		await this.saveData(payload);
 	}
 
@@ -204,9 +215,13 @@ export default class LocalBackupPlugin extends Plugin {
 			const backupZipName = `${fileNameWithDateValues}.zip`;
 			const vaultPath = (this.app.vault.adapter as any).basePath;
 			const platform = process.platform;
+			const platformPath =
+				platform === "win32"
+					? this.settings.winSavePathValue
+					: this.settings.unixSavePathValue;
 			const savePathValue = resolveBackupOutputPath(
 				this.app,
-				this.settings.backupOutputPathValue
+				platformPath
 			);
 			let archiverPathValue = "";
 			if (platform === "win32") {

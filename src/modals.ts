@@ -30,9 +30,8 @@ export class NewVersionNotifyModal extends Modal {
 		const andNow = `**Here are the updates in the latest version:**`;
 
 		const releaseNotes = [
-			"Remove ribbon icon",
-			"Add included directories backup filter by raozhiyong11",
-			"Refactor backup output path handling"
+			"Restore ribbon icon feature",
+			"Restore winSavePath and unixSavePath settings, and remain the ENV variable support",
 		];
 
 		const markdownStr = `${header}\n\n${text}\n\n${andNow}\n\n---\n\n${releaseNotes

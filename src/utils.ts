@@ -621,7 +621,7 @@ function getBackupPathFromEnv(): string | undefined {
 
 /**
  * Resolves backup output directory: env {@link BACKUP_OUTPUT_PATH_ENV_KEY} wins,
- * then non-empty plugin setting, then parent of vault.
+ * then non-empty platform-specific path from settings, then parent of vault.
  */
 export function resolveBackupOutputPath(
 	app: App,

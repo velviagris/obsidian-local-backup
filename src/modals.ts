@@ -30,8 +30,8 @@ export class NewVersionNotifyModal extends Modal {
 		const andNow = `**Here are the updates in the latest version:**`;
 
 		const releaseNotes = [
-			"Restore ribbon icon feature",
-			"Restore winSavePath and unixSavePath settings, and remain the ENV variable support",
+			"Upgrade dependency libraries to their latest versions",
+			"Fix compatibility issues with TypeScript 6.0 compiler settings",
 		];
 
 		const markdownStr = `${header}\n\n${text}\n\n${andNow}\n\n---\n\n${releaseNotes
@@ -83,9 +83,9 @@ function addExtraHashToHeadings(markdownText: string, numHashes = 1): string {
 
 export class PromptModal extends Modal {
 	plugin: LocalBackupPlugin;
-	private resolve: (value: string) => void;
+	private resolve!: (value: string) => void;
 	private submitted = false;
-	private value: string;
+	private value!: string;
 
 	constructor(
 		private prompt_text: string,
@@ -133,8 +133,8 @@ export class PromptModal extends Modal {
 		textInput.setPlaceholder("Type text here");
 		textInput.setValue(this.value);
 		textInput.onChange((value) => (this.value = value));
-		textInput.inputEl.addEventListener("keydown", (evt: KeyboardEvent) =>
-			this.enterCallback(evt)
+		textInput.inputEl.addEventListener("keydown", (evt: Event) =>
+			this.enterCallback(evt as KeyboardEvent)
 		);
 	}
 

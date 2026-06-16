@@ -64,8 +64,8 @@ const DEFAULT_SETTINGS: LocalBackupPluginSettings = {
 };
 
 export default class LocalBackupPlugin extends Plugin {
-	settings: LocalBackupPluginSettings;
-	utils: LocalBackupUtils;
+	settings!: LocalBackupPluginSettings;
+	utils!: LocalBackupUtils;
 	intervalId: NodeJS.Timeout | null = null;
 
 	async onload() {

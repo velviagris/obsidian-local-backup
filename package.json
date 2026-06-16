@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-local-backup",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Automatically creates a local backup of the vault.",
 	"main": "main.js",
 	"scripts": {
@@ -15,17 +15,17 @@
 	"author": "GC Chen",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/adm-zip": "^0.5.3",
-		"@types/fs-extra": "^11.0.3",
-		"@types/node": "^24.0.14",
-		"@typescript-eslint/eslint-plugin": "^8.37.0",
-		"@typescript-eslint/parser": "^8.37.0",
-		"adm-zip": "^0.5.10",
-		"builtin-modules": "^5.0.0",
-		"esbuild": "^0.25.1",
-		"fs-extra": "^11.1.1",
-		"obsidian": "^1.4.11",
-		"tslib": "^2.6.2",
-		"typescript": "^5.8.3"
+		"@types/adm-zip": "^0.5.8",
+		"@types/fs-extra": "^11.0.4",
+		"@types/node": "^25.9.3",
+		"@typescript-eslint/eslint-plugin": "^8.61.1",
+		"@typescript-eslint/parser": "^8.61.1",
+		"adm-zip": "^0.5.17",
+		"builtin-modules": "^5.2.0",
+		"esbuild": "^0.28.1",
+		"fs-extra": "^11.3.5",
+		"obsidian": "^1.13.1",
+		"tslib": "^2.8.1",
+		"typescript": "^6.0.3"
 	}
 }

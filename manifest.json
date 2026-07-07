@@ -1,12 +1,12 @@
 {
 	"id": "local-backup",
 	"name": "Local Backup",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"minAppVersion": "0.15.0",
 	"description": "Automatically creates a local backup of the vault.",
 	"author": "GC Chen",
 	"authorUrl": "https://github.com/cgcel/obsidian-local-backup",
-	"fundingUrl": "https://paypal.me/gris0297",
+	"fundingUrl": "https://ko-fi.com/gracechan",
 	"isDesktopOnly": true,
 	"js": "main.js",
 	"tags": ["backup"]

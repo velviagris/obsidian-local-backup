@@ -30,8 +30,8 @@ export class NewVersionNotifyModal extends Modal {
 		const andNow = `**Here are the updates in the latest version:**`;
 
 		const releaseNotes = [
-			"Upgrade dependency libraries to their latest versions",
-			"Fix compatibility issues with TypeScript 6.0 compiler settings",
+			"Improve stability of calling file archiver",
+			"Update information of the plugin",
 		];
 
 		const markdownStr = `${header}\n\n${text}\n\n${andNow}\n\n---\n\n${releaseNotes

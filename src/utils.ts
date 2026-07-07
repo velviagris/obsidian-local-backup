@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs-extra";
 import AdmZip from "adm-zip";
-import { exec, execSync } from "child_process";
+import { exec, execFile, execSync } from "child_process";
 import { App } from "obsidian";
 import LocalBackupPlugin from "./main";
 import { BACKUP_OUTPUT_PATH_ENV_KEY } from "./constants";
@@ -232,20 +232,22 @@ export class LocalBackupUtils {
 
 	/**
 	 * Create file by external archiver
-	 * @param archiverType
-	 * @param archiverPath
-	 * @param vaultPath
-	 * @param backupZipPath
-	 * @returns
+	 * @param archiverType Type of the archiver (e.g., "sevenZip", "winRAR", "bandizip")
+	 * @param archiverPath Path to the archiver executable
+	 * @param archiveFileType The type of archive file
+	 * @param vaultPath Path to the vault to be backed up
+	 * @param backupFilePath Target path for the backup file
+	 * @param customizedArguments Additional arguments provided by the user
+	 * @returns Promise that resolves when the archive is created
 	 */
-	async createFileByArchiver(
+	createFileByArchiver(
 		archiverType: string,
 		archiverPath: string,
 		archiveFileType: string,
 		vaultPath: string,
 		backupFilePath: string,
 		customizedArguments: string
-	) {
+	): Promise<void> {
 		const excludedPatterns = this.parsePatternList(
 			this.plugin.settings.excludedDirectoriesValue
 		);
@@ -258,105 +260,98 @@ export class LocalBackupUtils {
 			excludedPatterns
 		);
 
-		// Prepare exclusion parameters for different archivers
-		let exclusionParams = "";
-		let inputSources = `"${vaultPath}"`;
+		const args: string[] = [];
+		const cwdPath = includedPatterns.length > 0 ? vaultPath : undefined;
+		const customArgsArr = customizedArguments
+			? customizedArguments.split(" ").filter((p) => p.trim() !== "")
+			: [];
 
 		if (excludedPatterns.length > 0) {
-				this.log(`Excluding patterns for ${archiverType}: ${excludedPatterns.join(
-						", "
-					)}`, "log");
-
-			switch (archiverType) {
-				case "sevenZip":
-					// 7-Zip uses -xr!pattern for exclusions
-					exclusionParams = excludedPatterns
-						.map((pattern) => `-xr!${pattern}`)
-						.join(" ");
-					break;
-				case "winRAR":
-					// WinRAR uses -xpattern for exclusions
-					exclusionParams = excludedPatterns
-						.map((pattern) => `-x${pattern}`)
-						.join(" ");
-					break;
-				case "bandizip":
-					// Bandizip uses -ex:{list} for exclusions
-					const exclusions = excludedPatterns
-						.map((pattern) => `${pattern}/*`)
-						.join(";");
-					exclusionParams = `-ex:"${exclusions}"`;
-					break;
-			}
+			this.log(
+				`Excluding patterns for ${archiverType}: ${excludedPatterns.join(", ")}`,
+				"log"
+			);
 		}
 
 		if (includedPatterns.length > 0) {
-			this.log(`Including patterns for ${archiverType}: ${includedPatterns.join(", ")}`, "log");
-
-			if (includedEntries.length === 0) {
-				throw new Error(
-					"No files or directories matched the Included directories setting."
-				);
-			}
-
-			inputSources = includedEntries.map((entry) => `"${entry}"`).join(" ");
+			this.log(
+				`Including patterns for ${archiverType}: ${includedPatterns.join(", ")}`,
+				"log"
+			);
 		}
 
 		switch (archiverType) {
 			case "sevenZip":
-				const sevenZipPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" a "${backupFilePath}" ${inputSources} ${exclusionParams} ${customizedArguments}`;
-						this.log(`command: ${command}`, "log");
-
-					exec(command, { cwd: includedPatterns.length > 0 ? vaultPath : undefined }, (error, stdout, stderr) => {
-						if (error) {
-							this.log(`Failed to create file by 7-Zip: ${error.message}`, "error");
-							reject(error);
-						} else {
-								this.log("File created by 7-Zip successfully.", "log");
-							resolve();
-						}
-					});
-				});
-				return sevenZipPromise;
+				args.push("a", backupFilePath);
+				// 7-Zip uses -xr!pattern for exclusions
+				excludedPatterns.forEach((p) => args.push(`-xr!${p}`));
+				args.push(...customArgsArr);
+				break;
 
 			case "winRAR":
-				const winRARPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" a -ep1 -rh ${exclusionParams} ${customizedArguments} "${backupFilePath}" ${includedPatterns.length > 0 ? inputSources : `"${vaultPath}\\*"`}`;
-						this.log(`command: ${command}`, "log");
-
-					exec(command, { cwd: includedPatterns.length > 0 ? vaultPath : undefined }, (error, stdout, stderr) => {
-						if (error) {
-							this.log(`Failed to create file by WinRAR: ${error.message}`, "error");
-							reject(error);
-						} else {
-								this.log("File created by WinRAR successfully.", "log");
-							resolve();
-						}
-					});
-				});
-				return winRARPromise;
+				args.push("a", "-ep1", "-rh");
+				// WinRAR uses -xpattern for exclusions
+				excludedPatterns.forEach((p) => args.push(`-x${p}`));
+				args.push(...customArgsArr);
+				args.push(backupFilePath);
+				break;
 
 			case "bandizip":
-				const bandizipPromise = new Promise<void>((resolve, reject) => {
-					const command = `"${archiverPath}" c ${exclusionParams} ${customizedArguments} "${backupFilePath}" ${inputSources}`;
-						this.log(`command: ${command}`, "log");
-
-					exec(command, { cwd: includedPatterns.length > 0 ? vaultPath : undefined }, (error, stdout, stderr) => {
-						if (error) {
-							this.log(`Failed to create file by Bandizip: ${error.message}`, "error");
-							reject(error);
-						} else {
-								this.log("File created by Bandizip successfully.", "log");
-							resolve();
-						}
-					});
-				});
-				return bandizipPromise;
+				args.push("c");
+				// Bandizip uses -ex:"pattern/*" for exclusions
+				if (excludedPatterns.length > 0) {
+					args.push(`-ex:${excludedPatterns.map((p) => `${p}/*`).join(";")}`);
+				}
+				args.push(...customArgsArr);
+				args.push(backupFilePath);
+				break;
 
 			default:
-				break;
+				return Promise.reject(new Error(`Unsupported archiver type: ${archiverType}`));
 		}
+
+		if (includedPatterns.length > 0) {
+			if (includedEntries.length === 0) {
+				return Promise.reject(
+					new Error("No files or directories matched the Included directories setting.")
+				);
+			}
+
+			// Add all matched entries directly to args
+			// Note: For a massive number of files, a list file (@list.txt) is recommended
+			// to avoid the Windows command line length limit (8191 characters).
+			args.push(...includedEntries);
+		} else {
+			// Back up the entire vault
+			args.push(archiverType === "winRAR" ? `${vaultPath}\\*` : vaultPath);
+		}
+
+		return new Promise<void>((resolve, reject) => {
+			this.log(`Executing ${archiverType}: "${archiverPath}" ${args.join(" ")}`, "log");
+
+			// Use execFile instead of exec to prevent command injection and parsing errors.
+			// maxBuffer is set to 10MB to avoid MaxBufferError on large vaults.
+			execFile(
+				archiverPath,
+				args,
+				{
+					cwd: cwdPath,
+					maxBuffer: 1024 * 1024 * 10,
+				},
+				(error, stdout, stderr) => {
+					if (error) {
+						this.log(
+							`Failed to create file by ${archiverType}: ${error.message}\nStderr: ${stderr}`,
+							"error"
+						);
+						reject(error);
+					} else {
+						this.log(`File created by ${archiverType} successfully.`, "log");
+						resolve();
+					}
+				}
+			);
+		});
 	}
 
 	parsePatternList(value: string): string[] {

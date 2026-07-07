@@ -115,7 +115,7 @@ Click the sidebar icon.
 
 You could consider buy me a coffee if the plugin saves your time!
 
-https://paypal.me/gris0297
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L7H622QKDJ)
 
 ## License
 

@@ -30,8 +30,8 @@ export class NewVersionNotifyModal extends Modal {
 		const andNow = `**Here are the updates in the latest version:**`;
 
 		const releaseNotes = [
-			"Improve stability of calling file archiver",
-			"Update information of the plugin",
+			"Fix security vulnerability in adm-zip (CVE-2026-39244)",
+			"Improve stability of calling file archiver"
 		];
 
 		const markdownStr = `${header}\n\n${text}\n\n${andNow}\n\n---\n\n${releaseNotes

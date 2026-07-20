@@ -2,10 +2,10 @@
 
 [中文说明](README.zh.md)
 
-![GitHub](https://img.shields.io/github/license/cgcel/obsidian-local-backup)
-![Github all releases](https://img.shields.io/github/downloads/cgcel/obsidian-local-backup/total.svg)
-![GitLab latest release](https://badgen.net/github/release/cgcel/obsidian-local-backup)
-[![CodeQL](https://github.com/cgcel/obsidian-local-backup/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/cgcel/obsidian-local-backup/actions/workflows/codeql.yml)
+![GitHub](https://img.shields.io/github/license/velviagris/obsidian-local-backup)
+![Github all releases](https://img.shields.io/github/downloads/velviagris/obsidian-local-backup/total.svg)
+![GitLab latest release](https://badgen.net/github/release/velviagris/obsidian-local-backup)
+[![CodeQL](https://github.com/velviagris/obsidian-local-backup/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/velviagris/obsidian-local-backup/actions/workflows/codeql.yml)
 
 Automatically creates a local backup of the vault.
 
@@ -119,4 +119,4 @@ You could consider buy me a coffee if the plugin saves your time!
 
 ## License
 
-**Obsidian Local Backup** is licensed under the MIT license. Refer to [LICENSE](https://github.com/cgcel/obsidian-local-backup/blob/master/LICENSE) for more information.
+**Obsidian Local Backup** is licensed under the MIT license. Refer to [LICENSE](https://github.com/velviagris/obsidian-local-backup/blob/master/LICENSE) for more information.

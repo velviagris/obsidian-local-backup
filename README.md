@@ -119,4 +119,4 @@ You could consider buy me a coffee if the plugin saves your time!
 
 ## License
 
-**Obsidian Local Backup** is licensed under the MIT license. Refer to [LICENSE](https://github.com/cgcel/obsidian-local-backup/blob/master/LICENSE) for more information.
+**Obsidian Local Backup** is licensed under the MIT license. Refer to [LICENSE](https://github.com/velviagris/obsidian-local-backup/blob/master/LICENSE) for more information.

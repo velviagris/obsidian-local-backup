@@ -2,10 +2,10 @@
 
 [English](README.md)
 
-![GitHub](https://img.shields.io/github/license/cgcel/obsidian-local-backup)
-![Github all releases](https://img.shields.io/github/downloads/cgcel/obsidian-local-backup/total.svg)
-![GitLab latest release](https://badgen.net/github/release/cgcel/obsidian-local-backup)
-[![CodeQL](https://github.com/cgcel/obsidian-local-backup/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/cgcel/obsidian-local-backup/actions/workflows/codeql.yml)
+![GitHub](https://img.shields.io/github/license/velviagris/obsidian-local-backup)
+![Github all releases](https://img.shields.io/github/downloads/velviagris/obsidian-local-backup/total.svg)
+![GitLab latest release](https://badgen.net/github/release/velviagris/obsidian-local-backup)
+[![CodeQL](https://github.com/velviagris/obsidian-local-backup/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/velviagris/obsidian-local-backup/actions/workflows/codeql.yml)
 
 自动为 Obsidian 仓库创建本地备份。
 
@@ -115,8 +115,8 @@
 
 如果这个插件帮你节省了时间，也欢迎请作者喝杯咖啡。
 
-https://paypal.me/gris0297
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L7H622QKDJ)
 
 ## 许可证
 
-**Obsidian Local Backup** 基于 MIT 协议发布。更多信息请参阅 [LICENSE](https://github.com/cgcel/obsidian-local-backup/blob/master/LICENSE)。
+**Obsidian Local Backup** 基于 MIT 协议发布。更多信息请参阅 [LICENSE](https://github.com/velviagris/obsidian-local-backup/blob/master/LICENSE)。

@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as fs from "fs-extra";
-import AdmZip from "adm-zip";
 import { exec, execFile, execSync } from "child_process";
 import { App } from "obsidian";
 import LocalBackupPlugin from "./main";
@@ -160,74 +159,92 @@ export class LocalBackupUtils {
 	}
 
 	/**
-	 * Create zip file by adm-zip
+	 * Create zip file by internal archiver library
 	 * @param vaultPath
 	 * @param backupZipPath
 	 */
-	async createZipByAdmZip(vaultPath: string, backupZipPath: string) {
-		// const AdmZip = require("adm-zip");
-		const zip = new AdmZip();
+	async createZipByInternalArchiver(vaultPath: string, backupZipPath: string): Promise<void> {
+		const archiver = require("archiver");
+		const fs = require("fs-extra");
+		const path = require("path");
 
-		const excludedPatterns = this.parsePatternList(
-			this.plugin.settings.excludedDirectoriesValue
-		);
-		const includedPatterns = this.parsePatternList(
-			this.plugin.settings.includedDirectoriesValue
-		);
+		return new Promise<void>((resolve, reject) => {
+			const output = fs.createWriteStream(backupZipPath);
+			const archive = archiver("zip", {
+				zlib: { level: 9 }, // Sets the compression level.
+			});
 
-		if (
-			(includedPatterns.length > 0 || excludedPatterns.length > 0) &&
-			this.plugin.settings.showConsoleLog
-		) {
-			if (includedPatterns.length > 0) {
-				this.log(`Including patterns: ${includedPatterns.join(", ")}`, "log");
-			}
-			if (excludedPatterns.length > 0) {
-				this.log(`Excluding patterns: ${excludedPatterns.join(", ")}`, "log");
-			}
-		}
+			output.on("close", () => {
+				this.log(`Archive created successfully. Total bytes: ${archive.pointer()}`, "log");
+				resolve();
+			});
 
-		// If no filters, add the entire folder
-		if (excludedPatterns.length === 0 && includedPatterns.length === 0) {
-			zip.addLocalFolder(vaultPath);
-		} else {
-			// Add files and folders selectively
-			const fs = require("fs-extra");
-			const path = require("path");
-
-			// Function to recursively add files and folders
-			const addFilesRecursively = (
-				dirPath: string,
-				relativePath: string = ""
-			) => {
-				const entries = fs.readdirSync(dirPath);
-
-				for (const entry of entries) {
-					const fullPath = path.join(dirPath, entry);
-					const entryRelativePath = path.join(relativePath, entry);
-					const stats = fs.statSync(fullPath);
-
-					if (this.shouldExcludePath(entryRelativePath, excludedPatterns)) {
-						continue;
-					}
-
-					if (stats.isDirectory()) {
-						// Keep walking the tree so nested included files can still be found.
-						addFilesRecursively(fullPath, entryRelativePath);
-					} else if (
-						this.shouldIncludePath(entryRelativePath, includedPatterns)
-					) {
-						// Add file to zip
-						zip.addLocalFile(fullPath, relativePath);
-					}
+			archive.on("warning", (err: any) => {
+				if (err.code === "ENOENT") {
+					this.log(`Archiver warning: ${err.message}`, "warning");
+				} else {
+					reject(err);
 				}
-			};
+			});
 
-			// Start recursive addition from vault root
-			addFilesRecursively(vaultPath);
-		}
+			archive.on("error", (err: any) => {
+				reject(err);
+			});
 
-		await zip.writeZipPromise(backupZipPath);
+			archive.pipe(output);
+
+			const excludedPatterns = this.parsePatternList(
+				this.plugin.settings.excludedDirectoriesValue
+			);
+			const includedPatterns = this.parsePatternList(
+				this.plugin.settings.includedDirectoriesValue
+			);
+
+			if (
+				(includedPatterns.length > 0 || excludedPatterns.length > 0) &&
+				this.plugin.settings.showConsoleLog
+			) {
+				if (includedPatterns.length > 0) {
+					this.log(`Including patterns: ${includedPatterns.join(", ")}`, "log");
+				}
+				if (excludedPatterns.length > 0) {
+					this.log(`Excluding patterns: ${excludedPatterns.join(", ")}`, "log");
+				}
+			}
+
+			// If no filters, add the entire folder
+			if (excludedPatterns.length === 0 && includedPatterns.length === 0) {
+				archive.directory(vaultPath, false);
+			} else {
+				// Add files and folders selectively
+				const addFilesRecursively = (dirPath: string, relativePath = "") => {
+					const entries = fs.readdirSync(dirPath);
+
+					for (const entry of entries) {
+						const fullPath = path.join(dirPath, entry);
+						const entryRelativePath = path.join(relativePath, entry);
+						const stats = fs.statSync(fullPath);
+
+						if (this.shouldExcludePath(entryRelativePath, excludedPatterns)) {
+							continue;
+						}
+
+						if (stats.isDirectory()) {
+							// Keep walking the tree so nested included files can still be found.
+							addFilesRecursively(fullPath, entryRelativePath);
+						} else if (this.shouldIncludePath(entryRelativePath, includedPatterns)) {
+							// Add file to zip
+							archive.file(fullPath, { name: entryRelativePath.replace(/\\/g, "/") });
+						}
+					}
+				};
+
+				// Start recursive addition from vault root
+				addFilesRecursively(vaultPath);
+			}
+
+			archive.finalize();
+		});
 	}
 
 	/**

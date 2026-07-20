@@ -249,7 +249,7 @@ export default class LocalBackupPlugin extends Plugin {
 					this.settings.customizedArguments
 				);
 			} else {
-				await this.utils.createZipByAdmZip(vaultPath, backupFilePath);
+				await this.utils.createZipByInternalArchiver(vaultPath, backupFilePath);
 			}
 
 			this.utils.log(`Vault backup created: ${backupFilePath}`, "log");

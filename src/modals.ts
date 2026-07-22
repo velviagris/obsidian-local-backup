@@ -143,7 +143,7 @@ export class PromptModal extends Modal {
 
 		if (this.multi_line) {
 			if (Platform.isDesktop) {
-				// eslint-disable-next-line no-empty
+				// eslint-disable-next-line no-empty -- Allow shift+enter for newlines
 				if (evt.shiftKey && evt.key === "Enter") {
 				} else if (evt.key === "Enter") {
 					this.resolveAndClose(evt);
